@@ -2,13 +2,13 @@ _THIS     := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 _ROOT     := $(_THIS)
 EVALFILE   = $(_ROOT)/nnueweights.bin
 CXX       := g++
-TARGET    := ChessV19
+TARGET    := Superultra
 CXXFLAGS  :=  -Wl,--stack,8589934592 -Wall -Wcast-qual -fno-exceptions -std=gnu++2a -pedantic -Wextra -Wshadow -Wdouble-promotion -Wformat=2 -Wnull-dereference \
 -Wlogical-op -Wunused -Wold-style-cast -Wundef -DNDEBUG
 NATIVE     = -march=native
 
 # engine name
-NAME      := ChessV19
+NAME      := Superultra
 
 # Detect Windows
 ifeq ($(OS), Windows_NT)
@@ -74,7 +74,7 @@ OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 DEPENDS := $(patsubst %.cpp,%.d,$(SOURCES))
 EXE     := $(NAME)$(SUFFIX)
 
-ChessV19: $(TARGET)
+Superultra: $(TARGET)
 clean:
 	rm -rf *.o $(DEPENDS)
 
