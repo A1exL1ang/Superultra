@@ -4,6 +4,16 @@
 #include "search.h"
 #include "movescore.h"
 
+const static movescore_t mvvlva[7][7] = {
+    {},                                      // Victim: None
+    {0, 2050, 2040, 2030, 2020, 2010, 2000}, // Victim: Pawn
+    {0, 3050, 3040, 3030, 3020, 3010, 3000}, // Victim: Knight
+    {0, 4050, 4040, 4030, 4020, 4010, 4000}, // Victim: Bishop
+    {0, 5050, 5040, 5030, 5020, 5010, 5000}, // Victim: Rook
+    {0, 6050, 6040, 6030, 6020, 6010, 6000}, // Victim: Queen
+    {}                                       // Victim: King
+};
+
 const static movescore_t mvv[7] = {
     0, 100000, 200000, 200000, 300000, 400000, 0
 };
@@ -39,9 +49,13 @@ void scoreMoves(moveList &moves, move_t ttMove, depth_t ply, position &board, se
 
         // Step 3) Capture
         else if (board.moveCaptType(move)){
+            /*
             score = (board.seeGreater(move, -50) ? goodCaptScore : badCaptScore) 
                   + mvv[board.moveCaptType(move)]
                   + getCaptHistory(move, ply, board, sd, ss);
+            */
+            score += (board.seeGreater(move, -50) ? goodCaptScore : badCaptScore) 
+                   + mvvlva[board.moveCaptType(move)][board.movePieceType(move)];
         }
 
         // Step 4) Killer 1
@@ -73,7 +87,8 @@ static inline void updateHistoryValue(movescore_t &cur, movescore_t bonus){
 }
 
 static inline movescore_t calcBonus(depth_t depth){
-    return std::min(8 * depth * depth + 32 * std::max(depth - 1, 0), 1200);
+    return std::min(16 * static_cast<movescore_t>(depth) * static_cast<movescore_t>(depth), 1200);
+    // return std::min(8 * depth * depth + 32 * std::max(depth - 1, 0), 1200);
 }
 
 void updateAllHistory(move_t bestMove, moveList &quiets, moveList &capts, depth_t depth, depth_t ply, position &board, searchData &sd, searchStack *ss){
@@ -95,6 +110,7 @@ void updateAllHistory(move_t bestMove, moveList &quiets, moveList &capts, depth_
             
             updateHistoryValue(sd.history[board.getTurn()][moveFrom(move)][moveTo(move)], bonus);
 
+            /*
             if (ply >= 1 and (ss - 1)->move != nullOrNoMove)
                 updateHistoryValue((*(ss - 1)->contHist)[board.movePieceEnc(move)][moveTo(move)], bonus);
             
@@ -103,23 +119,26 @@ void updateAllHistory(move_t bestMove, moveList &quiets, moveList &capts, depth_
 
             if (ply >= 4 and (ss - 4)->move != nullOrNoMove)
                 updateHistoryValue((*(ss - 4)->contHist)[board.movePieceEnc(move)][moveTo(move)], bonus);
+            */
         }   
     }
     // Update capture history
+
+    /*
     for (int i = 0; i < capts.sz; i++){
         move_t move = capts.moves[i].move;
         movescore_t bonus = calcBonus(depth) * (move == bestMove ? 1 : -1);
         
         updateHistoryValue(sd.chist[board.movePieceEnc(move)][moveTo(move)][board.moveCaptType(move)], bonus);
     }
-    
+    */
 }
 
 movescore_t getQuietHistory(move_t move, depth_t ply, position &board, searchData &sd, searchStack *ss){
     movescore_t score = 0;
 
     score += sd.history[board.getTurn()][moveFrom(move)][moveTo(move)];
-
+    /*
     if (ply >= 1 and (ss - 1)->move != nullOrNoMove)
         score += 2 * (*(ss - 1)->contHist)[board.movePieceEnc(move)][moveTo(move)];
 
@@ -128,10 +147,12 @@ movescore_t getQuietHistory(move_t move, depth_t ply, position &board, searchDat
     
     if (ply >= 4 and (ss - 4)->move != nullOrNoMove)
         score += (*(ss - 4)->contHist)[board.movePieceEnc(move)][moveTo(move)];
-
+    */
     return score;
 }
 
+/*
 movescore_t getCaptHistory(move_t move, depth_t ply, position &board, searchData &sd, searchStack *ss){
     return sd.chist[board.movePieceEnc(move)][moveTo(move)][board.moveCaptType(move)];
 }
+*/
