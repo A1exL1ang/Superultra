@@ -101,7 +101,7 @@ void updateAllHistory(move_t bestMove, moveList &quiets, moveList &capts, depth_
             sd.killers[ply][0] = bestMove;
         }
         // Set counter
-        *(ss - 1)->counter = bestMove;
+        // *(ss - 1)->counter = bestMove;
 
         // Update history values by penalizing failing moves and incrementing best move
         for (int i = 0; i < quiets.sz; i++){
