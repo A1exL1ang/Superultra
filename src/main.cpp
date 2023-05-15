@@ -55,7 +55,7 @@ int main(){
     initTT();
 
     // Recent loss: 0.004985
-    if (true){
+    if (false){
         doLoop();
         return 0;
     }

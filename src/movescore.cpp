@@ -54,8 +54,8 @@ void scoreMoves(moveList &moves, move_t ttMove, depth_t ply, position &board, se
                   + mvv[board.moveCaptType(move)]
                   + getCaptHistory(move, ply, board, sd, ss);
             */
-            score += (board.seeGreater(move, -50) ? goodCaptScore : badCaptScore) 
-                   + mvvlva[board.moveCaptType(move)][board.movePieceType(move)];
+            score = (board.seeGreater(move, -50) ? goodCaptScore : badCaptScore) 
+                  + mvvlva[board.moveCaptType(move)][board.movePieceType(move)];
         }
 
         // Step 4) Killer 1
@@ -77,6 +77,7 @@ void scoreMoves(moveList &moves, move_t ttMove, depth_t ply, position &board, se
         else{
             score = nonspecialMoveScore + getQuietHistory(move, ply, board, sd, ss);
         }
+        
     }
 }
 
