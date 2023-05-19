@@ -87,8 +87,8 @@ Elo difference: -0.2 +/- 4.2, LOS: 46.2 %, DrawRatio: 55.2 %
 SPRT: llr -2.95 (-100.3%), lbound -2.94, ubound 2.94 - H0 was accepted
 
 .\cutechess-cli `
+-engine conf="E7_UpdateHistBonus" `
 -engine conf="E6_ContHist" `
--engine conf="E5_TT2" `
 -each tc=6+0.06 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-6ply-1000.pgn" `
 -games 2 `
 -rounds 10000 `

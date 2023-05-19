@@ -88,8 +88,8 @@ static inline void updateHistoryValue(movescore_t &cur, movescore_t bonus){
 }
 
 static inline movescore_t calcBonus(depth_t depth){
-    return std::min(16 * static_cast<movescore_t>(depth) * static_cast<movescore_t>(depth), 1200);
-    // return std::min(8 * depth * depth + 32 * std::max(depth - 1, 0), 1200);
+    // return std::min(16 * static_cast<movescore_t>(depth) * static_cast<movescore_t>(depth), 1200);
+    return std::min(8 * depth * depth + 32 * std::max(depth - 1, 0), 1200);
 }
 
 void updateAllHistory(move_t bestMove, moveList &quiets, moveList &capts, depth_t depth, depth_t ply, position &board, searchData &sd, searchStack *ss){
@@ -146,7 +146,7 @@ movescore_t getQuietHistory(move_t move, depth_t ply, position &board, searchDat
 
     if (ply >= 2 and (ss - 2)->move != nullOrNoMove)
         score += 2 * (*(ss - 2)->contHist)[board.movePieceEnc(move)][moveTo(move)];
-        
+
     /*
     if (ply >= 4 and (ss - 4)->move != nullOrNoMove)
         score += (*(ss - 4)->contHist)[board.movePieceEnc(move)][moveTo(move)];
