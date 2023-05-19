@@ -40,7 +40,7 @@ struct ttEntry{
         depth = ageAndBound = 0;
     }
 
-    // Entry constructor
+    // Regular entry constructor
     ttEntry(ttKey_t zhash_, score_t score_, score_t staticEval_, move_t bestMove_, depth_t depth_, ttFlagAge_t ageAndBound_):
         zhash(zhash_),
         score(score_),

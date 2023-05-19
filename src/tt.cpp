@@ -94,14 +94,14 @@ void ttStruct::addToTT(ttKey_t zhash, score_t score, score_t staticEval, move_t 
     }
 
     // Replace if:
-    // 1) No entry of same hash found
+    // 1) Did not find entry of same hash and our entry is somewhat on par with worst entry in bucket
     // 2) Found entry of same hash and our entry is somewhat on par with the found entry
     
     ttEntry newEntry = ttEntry(zhash, scoreToTT(score, ply), staticEval, bestMove, depth, encodeAgeAndBound(currentAge, bound));
 
     if (bound == boundExact
-        or (bucket[replace].zhash != zhash and quality(newEntry, currentAge) >= quality(bucket[replace], currentAge))
-        or (bucket[replace].zhash == zhash and depth >= bucket[replace].depth))
+        or (bucket[replace].zhash != zhash and quality(newEntry, currentAge) + 1 + 2 * pvNode >= quality(bucket[replace], currentAge))
+        or (bucket[replace].zhash == zhash and depth + pvNode >= bucket[replace].depth))
     {
         bucket[replace] = newEntry;
     }

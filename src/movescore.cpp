@@ -111,13 +111,14 @@ void updateAllHistory(move_t bestMove, moveList &quiets, moveList &capts, depth_
             
             updateHistoryValue(sd.history[board.getTurn()][moveFrom(move)][moveTo(move)], bonus);
 
-            /*
+            
             if (ply >= 1 and (ss - 1)->move != nullOrNoMove)
                 updateHistoryValue((*(ss - 1)->contHist)[board.movePieceEnc(move)][moveTo(move)], bonus);
             
             if (ply >= 2 and (ss - 2)->move != nullOrNoMove)
                 updateHistoryValue((*(ss - 2)->contHist)[board.movePieceEnc(move)][moveTo(move)], bonus);
 
+            /*
             if (ply >= 4 and (ss - 4)->move != nullOrNoMove)
                 updateHistoryValue((*(ss - 4)->contHist)[board.movePieceEnc(move)][moveTo(move)], bonus);
             */
@@ -139,16 +140,18 @@ movescore_t getQuietHistory(move_t move, depth_t ply, position &board, searchDat
     movescore_t score = 0;
 
     score += sd.history[board.getTurn()][moveFrom(move)][moveTo(move)];
-    /*
+    
     if (ply >= 1 and (ss - 1)->move != nullOrNoMove)
         score += 2 * (*(ss - 1)->contHist)[board.movePieceEnc(move)][moveTo(move)];
 
     if (ply >= 2 and (ss - 2)->move != nullOrNoMove)
         score += 2 * (*(ss - 2)->contHist)[board.movePieceEnc(move)][moveTo(move)];
-    
+        
+    /*
     if (ply >= 4 and (ss - 4)->move != nullOrNoMove)
         score += (*(ss - 4)->contHist)[board.movePieceEnc(move)][moveTo(move)];
     */
+
     return score;
 }
 
