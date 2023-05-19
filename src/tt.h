@@ -39,6 +39,16 @@ struct ttEntry{
         bestMove = nullOrNoMove;
         depth = ageAndBound = 0;
     }
+
+    // Entry constructor
+    ttEntry(ttKey_t zhash_, score_t score_, score_t staticEval_, move_t bestMove_, depth_t depth_, ttFlagAge_t ageAndBound_):
+        zhash(zhash_),
+        score(score_),
+        staticEval(staticEval_),
+        bestMove(bestMove_),
+        depth(depth_),
+        ageAndBound(ageAndBound_)
+    {}
 };
 
 struct ttCluster{

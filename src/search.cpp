@@ -277,7 +277,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         and !inCheck
         and depth >= 3 
         and ss->staticEval >= beta
-        and (ply > 0 and (ss - 1)->move != nullOrNoMove)
+        and (ply >= 1 and (ss - 1)->move != nullOrNoMove)
         and board.hasMajorPieceLeft(board.getTurn()))
     {
         // Make move and update variables
