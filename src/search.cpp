@@ -108,8 +108,8 @@ template<bool pvNode> static score_t qsearch(score_t alpha, score_t beta, depth_
         // Make and update
         
         ss->move = move;
-        (ss->counter) = &(sd.counter[board.movePieceEnc(move)][moveTo(move)]);
-        (ss->contHist) = &(sd.contHist[board.moveCaptType(move) != noPiece][board.movePieceEnc(move)][moveTo(move)]);
+        ss->counter = &(sd.counter[board.movePieceEnc(move)][moveTo(move)]);
+        ss->contHist = &(sd.contHist[board.moveCaptType(move) != noPiece][board.movePieceEnc(move)][moveTo(move)]);
         sd.nodes++;
 
         board.makeMove(move);
@@ -378,8 +378,8 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         // Make and update
         
         ss->move = move;
-        (ss->counter) = &(sd.counter[board.movePieceEnc(move)][moveTo(move)]);
-        (ss->contHist) = &(sd.contHist[board.moveCaptType(move) != noPiece][board.movePieceEnc(move)][moveTo(move)]);
+        ss->counter = &(sd.counter[board.movePieceEnc(move)][moveTo(move)]);
+        ss->contHist = &(sd.contHist[board.moveCaptType(move) != noPiece][board.movePieceEnc(move)][moveTo(move)]);
         sd.nodes++;
 
         board.makeMove(move);
@@ -452,7 +452,8 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
             // Beta cutoff
 
             if (score >= beta){
-                updateAllHistory(move, quiets, depth, ply, board, sd, ss);
+                if (isQuiet)
+                    updateAllHistory(move, quiets, depth, ply, board, sd, ss);
                 break;
             }
 
