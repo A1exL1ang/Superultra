@@ -15,7 +15,7 @@ const static movescore_t mvvlva[7][7] = {
 };
 
 const static movescore_t mvv[7] = {
-    0, 100000, 200000, 200000, 300000, 400000, 0
+    0, 0, 2048, 2048, 4096, 8192, 0
 };
 
 const static movescore_t maximumHist = 16384;
@@ -30,6 +30,58 @@ const static movescore_t nonspecialMoveScore    = 1400000000;
 const static movescore_t badCaptScore           = 1300000000;
 
 const static movescore_t promoScoreBonus[7] = { 0, 0, 1, 2, 3, 4, 0 };
+
+static inline void updateHistoryValue(movescore_t &cur, movescore_t bonus){
+    // We use history gravity which means we scale based on its current magnitude
+    // new bonus = bonus * (1 - |value| / max value)
+    cur += bonus - static_cast<uint64>(abs(bonus)) * static_cast<uint64>(cur) / maximumHist;
+}
+
+static inline movescore_t calcBonus(depth_t depth){
+    return std::min(8 * depth * depth + 32 * std::max(depth - 1, 0), 1200);
+}
+
+static inline movescore_t getQuietHistory(move_t move, depth_t ply, position &board, searchData &sd, searchStack *ss){
+    movescore_t score = 0;
+
+    score += sd.history[board.getTurn()][moveFrom(move)][moveTo(move)];
+    
+    if (ply >= 1 and (ss - 1)->move != nullOrNoMove)
+        score += 2 * (*(ss - 1)->contHist)[board.movePieceEnc(move)][moveTo(move)];
+
+    if (ply >= 2 and (ss - 2)->move != nullOrNoMove)
+        score += 2 * (*(ss - 2)->contHist)[board.movePieceEnc(move)][moveTo(move)];
+
+    return score;
+}
+
+void updateAllHistory(move_t bestMove, moveList &quiets, depth_t depth, depth_t ply, position &board, searchData &sd, searchStack *ss){
+    
+    // If best move was a quiet move
+    if (board.moveCaptType(bestMove) == noPiece and movePromo(bestMove) == noPiece){
+        // Set killer
+        if (bestMove != sd.killers[ply][0]){
+            sd.killers[ply][1] = sd.killers[ply][0];
+            sd.killers[ply][0] = bestMove;
+        }
+        // Set counter
+        // *(ss - 1)->counter = bestMove;
+
+        // Update history values by penalizing failing moves and incrementing best move
+        for (int i = 0; i < quiets.sz; i++){
+            move_t move = quiets.moves[i].move;
+            movescore_t bonus = calcBonus(depth) * (move == bestMove ? 1 : -1);
+            
+            updateHistoryValue(sd.history[board.getTurn()][moveFrom(move)][moveTo(move)], bonus);
+
+            if (ply >= 1 and (ss - 1)->move != nullOrNoMove)
+                updateHistoryValue((*(ss - 1)->contHist)[board.movePieceEnc(move)][moveTo(move)], bonus);
+            
+            if (ply >= 2 and (ss - 2)->move != nullOrNoMove)
+                updateHistoryValue((*(ss - 2)->contHist)[board.movePieceEnc(move)][moveTo(move)], bonus);
+        }   
+    }
+}
 
 void scoreMoves(moveList &moves, move_t ttMove, depth_t ply, position &board, searchData &sd, searchStack *ss){
     for (int i = 0; i < moves.sz; i++){
@@ -49,11 +101,6 @@ void scoreMoves(moveList &moves, move_t ttMove, depth_t ply, position &board, se
 
         // Step 3) Capture
         else if (board.moveCaptType(move)){
-            /*
-            score = (board.seeGreater(move, -50) ? goodCaptScore : badCaptScore) 
-                  + mvv[board.moveCaptType(move)]
-                  + getCaptHistory(move, ply, board, sd, ss);
-            */
             score = (board.seeGreater(move, -50) ? goodCaptScore : badCaptScore) 
                   + mvvlva[board.moveCaptType(move)][board.movePieceType(move)];
         }
@@ -77,86 +124,5 @@ void scoreMoves(moveList &moves, move_t ttMove, depth_t ply, position &board, se
         else{
             score = nonspecialMoveScore + getQuietHistory(move, ply, board, sd, ss);
         }
-        
     }
 }
-
-static inline void updateHistoryValue(movescore_t &cur, movescore_t bonus){
-    // We use history gravity which means we scale based on its current magnitude
-    // new bonus = bonus * (1 - |value| / max value)
-    cur += bonus - static_cast<uint64>(abs(bonus)) * static_cast<uint64>(cur) / maximumHist;
-}
-
-static inline movescore_t calcBonus(depth_t depth){
-    // return std::min(16 * static_cast<movescore_t>(depth) * static_cast<movescore_t>(depth), 1200);
-    return std::min(8 * depth * depth + 32 * std::max(depth - 1, 0), 1200);
-}
-
-void updateAllHistory(move_t bestMove, moveList &quiets, moveList &capts, depth_t depth, depth_t ply, position &board, searchData &sd, searchStack *ss){
-    
-    // If best move was a quiet move
-    if (board.moveCaptType(bestMove) == noPiece and movePromo(bestMove) == noPiece){
-        // Set killer
-        if (bestMove != sd.killers[ply][0]){
-            sd.killers[ply][1] = sd.killers[ply][0];
-            sd.killers[ply][0] = bestMove;
-        }
-        // Set counter
-        // *(ss - 1)->counter = bestMove;
-
-        // Update history values by penalizing failing moves and incrementing best move
-        for (int i = 0; i < quiets.sz; i++){
-            move_t move = quiets.moves[i].move;
-            movescore_t bonus = calcBonus(depth) * (move == bestMove ? 1 : -1);
-            
-            updateHistoryValue(sd.history[board.getTurn()][moveFrom(move)][moveTo(move)], bonus);
-
-            
-            if (ply >= 1 and (ss - 1)->move != nullOrNoMove)
-                updateHistoryValue((*(ss - 1)->contHist)[board.movePieceEnc(move)][moveTo(move)], bonus);
-            
-            if (ply >= 2 and (ss - 2)->move != nullOrNoMove)
-                updateHistoryValue((*(ss - 2)->contHist)[board.movePieceEnc(move)][moveTo(move)], bonus);
-
-            /*
-            if (ply >= 4 and (ss - 4)->move != nullOrNoMove)
-                updateHistoryValue((*(ss - 4)->contHist)[board.movePieceEnc(move)][moveTo(move)], bonus);
-            */
-        }   
-    }
-    // Update capture history
-
-    /*
-    for (int i = 0; i < capts.sz; i++){
-        move_t move = capts.moves[i].move;
-        movescore_t bonus = calcBonus(depth) * (move == bestMove ? 1 : -1);
-        
-        updateHistoryValue(sd.chist[board.movePieceEnc(move)][moveTo(move)][board.moveCaptType(move)], bonus);
-    }
-    */
-}
-
-movescore_t getQuietHistory(move_t move, depth_t ply, position &board, searchData &sd, searchStack *ss){
-    movescore_t score = 0;
-
-    score += sd.history[board.getTurn()][moveFrom(move)][moveTo(move)];
-    
-    if (ply >= 1 and (ss - 1)->move != nullOrNoMove)
-        score += 2 * (*(ss - 1)->contHist)[board.movePieceEnc(move)][moveTo(move)];
-
-    if (ply >= 2 and (ss - 2)->move != nullOrNoMove)
-        score += 2 * (*(ss - 2)->contHist)[board.movePieceEnc(move)][moveTo(move)];
-
-    /*
-    if (ply >= 4 and (ss - 4)->move != nullOrNoMove)
-        score += (*(ss - 4)->contHist)[board.movePieceEnc(move)][moveTo(move)];
-    */
-
-    return score;
-}
-
-/*
-movescore_t getCaptHistory(move_t move, depth_t ply, position &board, searchData &sd, searchStack *ss){
-    return sd.chist[board.movePieceEnc(move)][moveTo(move)][board.moveCaptType(move)];
-}
-*/

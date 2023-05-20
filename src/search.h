@@ -23,7 +23,6 @@ struct searchData{
     move_t counter[14][64];
 
     movescore_t history[2][64][64] = {};
-    movescore_t chist[14][64][7] = {};
     movescore_t contHist[2][14][64][14][64] = {};
 
     bool stopped = false;

@@ -305,7 +305,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
     }
     
     // Generate moves and check for draw/stalemate
-    moveList moves, quiets, capts;
+    moveList moves, quiets;
     board.genAllMoves(false, moves);
      
     if (moves.sz == 0){
@@ -330,8 +330,6 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
 
         if (isQuiet)
             quiets.addMove(move);
-        else if (board.moveCaptType(move) != noPiece)
-            capts.addMove(move);
         
         // Step 10) Move Count Pruning (~13.8 elo)
         // Complements LMR. If we are at low depth and searched enough
@@ -454,7 +452,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
             // Beta cutoff
 
             if (score >= beta){
-                updateAllHistory(move, quiets, capts, depth, ply, board, sd, ss);
+                updateAllHistory(move, quiets, depth, ply, board, sd, ss);
                 break;
             }
 

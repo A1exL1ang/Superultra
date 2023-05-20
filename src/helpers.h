@@ -39,6 +39,11 @@ inline int8 poplsb(uint64 &num){
     return b;
 }
 
+// Does the bitmask have the bit
+inline bool hasBit(bitboard_t mask, int8 bit){
+    return (mask & (1ULL << bit));
+}
+
 // Vertical flip a square
 inline square_t flip(square_t sq){
     return sq ^ 56;

@@ -55,7 +55,7 @@ int main(){
     initTT();
 
     // Recent loss: 0.004985
-    if (true){
+    if (false){
         doLoop();
         return 0;
     }
@@ -73,22 +73,15 @@ int main(){
       
     position board;
     board.readFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
-
+    // 3504426
     searchDriver(20000, board);
     board.makeMove(stringToMove("e2a6"));
     searchDriver(2000, board);
 }
 /*
-Score of E5_TT2 vs E3_UpdatedTT: 2637 - 2644 - 6515  [0.500] 11796
-...      E5_TT2 playing White: 1685 - 943 - 3270  [0.563] 5898
-...      E5_TT2 playing Black: 952 - 1701 - 3245  [0.437] 5898
-...      White vs Black: 3386 - 1895 - 6515  [0.563] 11796
-Elo difference: -0.2 +/- 4.2, LOS: 46.2 %, DrawRatio: 55.2 %
-SPRT: llr -2.95 (-100.3%), lbound -2.94, ubound 2.94 - H0 was accepted
-
 .\cutechess-cli `
+-engine conf="E15_CaptHistTry5" `
 -engine conf="E7_UpdateHistBonus" `
--engine conf="E6_ContHist" `
 -each tc=6+0.06 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-6ply-1000.pgn" `
 -games 2 `
 -rounds 10000 `

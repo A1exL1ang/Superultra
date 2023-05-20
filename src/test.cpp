@@ -33,28 +33,6 @@ void position::verifyConsistency(){
         std::cout<<"Got Hash: "<<stk->zhash<<", Expected hash: "<<correctHash<<std::endl;
     }
 
-    // Verify in check
-    bitboard_t attacked = 0;
-    
-    attacked |= pawnsAllAttack(pieceBB[pawn][!turn], !turn)
-              | kingAttack(lsb(pieceBB[king][!turn]));
-
-    for (bitboard_t m = pieceBB[knight][!turn]; m;)
-        attacked |= knightAttack(poplsb(m));
-    for (bitboard_t m = pieceBB[bishop][!turn]; m;)
-        attacked |= bishopAttack(poplsb(m), allBB);
-    for (bitboard_t m = pieceBB[rook][!turn]; m;)
-        attacked |= rookAttack(poplsb(m), allBB);
-    for (bitboard_t m = pieceBB[queen][!turn]; m;)
-        attacked |= queenAttack(poplsb(m), allBB);
-    
-    bool correctInCheck = (attacked & pieceBB[king][turn]);
-
-    if (correctInCheck != inCheck()){
-        std::cout<<"Fen: "<<getFen()<<std::endl;
-        std::cout<<"Got check: "<<inCheck()<<", Expected check: "<<correctInCheck<<std::endl;
-    }
-
     // Verify that we only generated captures
     moveList moves, ourResult, expected;
     genAllMoves(false, moves);

@@ -40,12 +40,26 @@ public:
     inline ttKey_t getHash(){
         return stk->zhash;
     }
+    inline bitboard_t allAttack(color_t col){
+        bitboard_t attacked = 0;
+        attacked |= pawnsAllAttack(pieceBB[pawn][col], col) | kingAttack(kingSq(col));
+
+        for (bitboard_t m = pieceBB[knight][col]; m;)
+            attacked |= knightAttack(poplsb(m));
+        
+        for (bitboard_t m = pieceBB[bishop][col]; m;)
+            attacked |= bishopAttack(poplsb(m), allBB);
+
+        for (bitboard_t m = pieceBB[rook][col]; m;)
+            attacked |= rookAttack(poplsb(m), allBB);
+        
+        for (bitboard_t m = pieceBB[queen][col]; m;)
+            attacked |= queenAttack(poplsb(m), allBB);
+        
+        return attacked;
+    }
     inline bool inCheck(){
-        return (pawnAttack(kingSq(turn), turn) & pieceBB[pawn][!turn])
-               or (knightAttack(kingSq(turn)) & pieceBB[knight][!turn])
-               or (bishopAttack(kingSq(turn), allBB) & pieceBB[bishop][!turn])
-               or (rookAttack(kingSq(turn), allBB) & pieceBB[rook][!turn])
-               or (queenAttack(kingSq(turn), allBB) & pieceBB[queen][!turn]);
+        return (allAttack(!turn) & pieceBB[king][turn]);
     }
     inline piece_t movePieceEnc(move_t move){
         return board[moveFrom(move)];
