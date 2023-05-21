@@ -8,7 +8,7 @@ static depth_t lmrReduction[maximumPly + 5][maxMovesInTurn];
 void initLMR(){
     for (depth_t depth = 1; depth <= maximumPly; depth++){
         for (int i = 0; i < maxMovesInTurn; i++){
-            lmrReduction[depth][i] = 0.75 + log(depth) * log(i + 1) / 2.25;
+            lmrReduction[depth][i] = 1.5 + log(depth) * log(i + 1) / 2;
         }
     }
 }
@@ -327,6 +327,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         move_t move = moves.moves[i].move;
         score_t score = checkMateScore;
         movescore_t history;
+        bool ttSoundCapt = (foundEntry and tte.depth > 0 and board.moveCaptType(tte.bestMove) != noPiece);
         bool isQuiet = movePromo(move) == noPiece and board.moveCaptType(move) == noPiece;
 
         if (isQuiet){
@@ -410,8 +411,8 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         {
             depth_t R = lmrReduction[depth][i];
             
-            // Increase reduction if we are currently at a non PV node
-            R += pvNode;
+            // Decrease reduction if we are currently at a PV node
+            R -= pvNode;
 
             // Decrease reduction if non-quiet
             R -= !isQuiet;
@@ -419,13 +420,13 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
             // Decrease reduction if special quiet
             R -= (move == sd.killers[ply][0] or move == sd.killers[ply][1] or (ply >= 1 and move == *((ss - 1)->counter)));
 
-            // Increase reduction if our TT move is 
-            R += !board.seeGreater(move, -50);
+            // Increase reduction if our TT move is a capture
+            R += ttSoundCapt;
             
             // Increase reduction if we aren't improving
             R += !improving;
 
-            // If quiet, decrease reduction based on history
+            // If quiet, adjust reduction based on history
             if (isQuiet)
                 R -= std::clamp(history / 4096, -2, 2);
 
