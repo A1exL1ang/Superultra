@@ -37,7 +37,7 @@ static inline movescore_t calcBonus(depth_t depth){
     return std::min(8 * depth * depth + 32 * std::max(depth - 1, 0), 1200);
 }
 
-static inline movescore_t getQuietHistory(move_t move, depth_t ply, position &board, searchData &sd, searchStack *ss){
+movescore_t getQuietHistory(move_t move, depth_t ply, position &board, searchData &sd, searchStack *ss){
     movescore_t score = 0;
 
     score += sd.history[board.getTurn()][moveFrom(move)][moveTo(move)];

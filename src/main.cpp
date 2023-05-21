@@ -81,8 +81,8 @@ int main(){
 }
 /*
 .\cutechess-cli `
+-engine conf="E17_AggressiveLMR" `
 -engine conf="E16_Counter" `
--engine conf="E7_UpdateHistBonus" `
 -each tc=6+0.06 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-6ply-1000.pgn" `
 -games 2 `
 -rounds 10000 `

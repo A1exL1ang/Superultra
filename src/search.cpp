@@ -8,7 +8,7 @@ static depth_t lmrReduction[maximumPly + 5][maxMovesInTurn];
 void initLMR(){
     for (depth_t depth = 1; depth <= maximumPly; depth++){
         for (int i = 0; i < maxMovesInTurn; i++){
-            lmrReduction[depth][i] = 1 + log(depth) * log(i + 1) / 1.7;
+            lmrReduction[depth][i] = 0.75 + log(depth) * log(i + 1) / 2.25;
         }
     }
 }
@@ -326,10 +326,13 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         // Variables related
         move_t move = moves.moves[i].move;
         score_t score = checkMateScore;
+        movescore_t history;
         bool isQuiet = movePromo(move) == noPiece and board.moveCaptType(move) == noPiece;
 
-        if (isQuiet)
+        if (isQuiet){
             quiets.addMove(move);
+            history = getQuietHistory(move, ply, board, sd, ss);
+        }
         
         // Step 10) Move Count Pruning (~13.8 elo)
         // Complements LMR. If we are at low depth and searched enough
@@ -352,6 +355,14 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         {
              continue;
         }
+
+        // Step 11) Futility Pruning
+        // We skip quiet moves if our static eval is way below alpha
+
+
+
+        // Step 12) Continuation based pruning
+
 
         // Step 12) SEE Pruning (~25 elo)
         // We skip moves with a bad SEE...
@@ -395,29 +406,33 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
 
         if (!inCheck
             and depth >= 3
-            and i >= 3 + 2 * pvNode)
+            and i >= 2 + 2 * pvNode)
         {
             depth_t R = lmrReduction[depth][i];
             
-            // Decrease reduction if we are currently at a PV node
-            R -= pvNode;
+            // Increase reduction if we are currently at a non PV node
+            R += pvNode;
 
             // Decrease reduction if non-quiet
             R -= !isQuiet;
 
             // Decrease reduction if special quiet
-            R -= (move == sd.killers[ply][0] or move == sd.killers[ply][1]);
+            R -= (move == sd.killers[ply][0] or move == sd.killers[ply][1] or (ply >= 1 and move == *((ss - 1)->counter)));
 
-            // Increase reduction if we have a bad SEE
+            // Increase reduction if our TT move is 
             R += !board.seeGreater(move, -50);
             
             // Increase reduction if we aren't improving
             R += !improving;
 
+            // If quiet, decrease reduction based on history
+            if (isQuiet)
+                R -= std::clamp(history / 4096, -2, 2);
+
             // We don't want to directly drop into qsearch after the reduction
             R = std::min(R, static_cast<depth_t>(depth - 1));
 
-            // Reduce if it's worthwhile
+            // Reduce as long as there is some reduction
             if (R >= 2){
                 score = -negamax<false>(-(alpha + 1), -alpha, ply + 1, depth - R, board, sd, ss + 1);
             }
