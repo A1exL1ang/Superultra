@@ -55,7 +55,7 @@ int main(){
     initTT();
 
     // Recent loss: 0.004985
-    if (false){
+    if (true){
         doLoop();
         return 0;
     }
@@ -82,8 +82,8 @@ int main(){
 }
 /*
 .\cutechess-cli `
+-engine conf="E40_FutilityPruning" `
 -engine conf="E39_HistoryPruning2" `
--engine conf="E36_ReworkLMP7" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
 -games 2 `
@@ -93,6 +93,6 @@ int main(){
 -draw movenumber=40 movecount=4 score=5 `
 -recover `
 -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05 `
--concurrency 10 `
+-concurrency 8 `
 -ratinginterval 10
 */

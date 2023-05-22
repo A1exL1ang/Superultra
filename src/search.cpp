@@ -320,7 +320,6 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
     score_t bestScore = -checkMateScore;
     move_t bestMove = 0;
     int movesSeen = 0;
-    bool skipAllQuiets = false;
 
     for (int i = 0; i < moves.sz; i++){
         // Bring best move up
@@ -341,29 +340,36 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
             history = getQuietHistory(move, ply, board, sd, ss);
         }
         
-        // Step 10) Move Count Pruning (~13.8 elo)
-        // Complements LMR. If we are at low depth and searched enough
-        // quiet moves we can stop searching all other quiet moves.
-
-        if (!pvNode
-            and !inCheck
-            and bestScore > -foundMate 
-            and depth <= 4
-            and quiets.sz >= 1 + 3 * depth * depth + improving)
-        {
-             skipAllQuiets = true;
-        }
-
         // Step 11) Quiet move pruning
+        // We skip quiet moves for various reasons. Note that we use lmrDepth for futility pruning and history based
+        // pruning because we want the lateness in move ordering to affect pruning. However, there is no need to use
+        // lmrDepth in move count pruning since we are literally pruning nodes if they are late...
 
         if (isQuiet and bestScore > -foundMate){
             depth_t lmrDepth = std::max(1, depth - lmrReduction[depth][i]);
 
-            // A) Late move quiet pruning
+            // A) Quiet Move Count Pruning (~14 elo)
+            // If we are at low depth and searched enough quiet moves we can stop searching all other quiet moves.
 
-            // B) Futility pruning
+            if (!pvNode
+                and !inCheck
+                and depth <= 4
+                and quiets.sz >= 1 + 3 * depth * depth + improving)
+            {
+                continue;
+            }
 
-            // C) History based pruning (9 elo)
+            // B) Futility Pruning (~20 elo)
+            // Skip quiet moves if we are way below alpha.
+
+            if (!inCheck
+                and lmrDepth <= 4
+                and ss->staticEval + 110 + 75 * lmrDepth + history / 160 < alpha)
+            {
+                continue;
+            }
+
+            // C) History Based Pruning (~9 elo)
             // Prune non-killer and non-counter quiet moves that have a bad history.
             
             if (!killerOrCounter
@@ -373,14 +379,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
                 continue;
             }
         }
-
-        // Code that checks if skip quiets is true
-        if (isQuiet and skipAllQuiets)
-            continue;
         
-
-
-
         // Step 12) SEE Pruning (~25 elo)
         // We skip moves with a bad SEE
 
