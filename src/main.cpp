@@ -75,15 +75,15 @@ int main(){
     board.readFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     // 3504426
     // counter: 3064725
-    // newest: 2194070
+    // probcut: 790735
     searchDriver(20000, board);
     board.makeMove(stringToMove("e2a6"));
     searchDriver(2000, board);
 }
 /*
 .\cutechess-cli `
+-engine conf="E44_Probcut4" `
 -engine conf="E40_FutilityPruning" `
--engine conf="E39_HistoryPruning2" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
 -games 2 `

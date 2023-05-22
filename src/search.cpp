@@ -316,6 +316,53 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
     // Score moves
     scoreMoves(moves, foundEntry ? tte.bestMove : nullOrNoMove, ply, board, sd, ss);
 
+    // Step 9) Probcut (~11.5 elo)
+    // probCutBeta is a calculated value above beta. We try promising tactical moves and if any
+    // of them have a score higher than probCutBeta at a reduced depth then we can assume that move will 
+    // will have a score higher than beta at a normal beta.
+
+    score_t probCutBeta = std::min(beta + 200 - 40 * improving, static_cast<int>(checkMateScore));
+
+    if (!pvNode 
+        and !inCheck
+        and depth >= 5
+        and abs(beta) < foundMate 
+        and !(foundEntry and tte.score < probCutBeta and tte.depth + 3 >= depth))
+    {
+        for (int i = 0; i < moves.sz; i++){
+            move_t move = moves.moves[i].move;
+
+            // Only try tactical moves that are promo or have SEE that will put us above beta
+            if (!(movePromo(move) != noPiece or (board.moveCaptType(move) != noPiece and board.seeGreater(move, probCutBeta - ss->staticEval))))
+                continue;
+
+            // Perform the move and make relevant updates
+            ss->move = move;
+            ss->counter = &(sd.counter[board.movePieceEnc(move)][moveTo(move)]);
+            ss->contHist = &(sd.contHist[board.moveCaptType(move) != noPiece][board.movePieceEnc(move)][moveTo(move)]);
+            sd.nodes++;
+
+            board.makeMove(move);
+
+            // Verify with QS
+            score_t score = -qsearch<false>(-probCutBeta, -(probCutBeta - 1), ply + 1, board, sd, ss + 1);
+            
+            // If verified, normal search with reduced depth
+            if (score >= probCutBeta)
+                score = -negamax<false>(-probCutBeta, -(probCutBeta - 1), ply + 1, depth - 4, board, sd, ss + 1);
+            
+            // Undo last move
+            board.undoLastMove();
+
+            // Prune as this move will likely fail high when searched with a normal depth
+            if (score >= probCutBeta){
+                // Store entry in TT
+                globalTT.addToTT(board.getHash(), score, ss->staticEval, move, depth - 3, ply, boundLower, pvNode);
+                return score;
+            }
+        }
+    }
+
     // Iterate over the moves
     score_t bestScore = -checkMateScore;
     move_t bestMove = 0;
@@ -329,6 +376,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         move_t move = moves.moves[i].move;
         score_t score = checkMateScore;
         movescore_t history;
+
         bool ttSoundCapt = (foundEntry and tte.depth > 0 and board.moveCaptType(tte.bestMove) != noPiece);
         bool isQuiet = movePromo(move) == noPiece and board.moveCaptType(move) == noPiece;
         bool killerOrCounter = (move == sd.killers[ply][0] or move == sd.killers[ply][1] or (ply >= 1 and move == *((ss - 1)->counter)));
