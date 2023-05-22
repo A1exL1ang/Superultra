@@ -55,7 +55,7 @@ int main(){
     initTT();
 
     // Recent loss: 0.004985
-    if (true){
+    if (false){
         doLoop();
         return 0;
     }
@@ -75,21 +75,24 @@ int main(){
     board.readFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
     // 3504426
     // counter: 3064725
-    // newest: 1506742
+    // newest: 2194070
     searchDriver(20000, board);
     board.makeMove(stringToMove("e2a6"));
     searchDriver(2000, board);
 }
 /*
 .\cutechess-cli `
--engine conf="E18_UpdateLMR" `
--engine conf="E17_AggressiveLMR" `
--each tc=6+0.06 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-6ply-1000.pgn" `
+-engine conf="E39_HistoryPruning2" `
+-engine conf="E36_ReworkLMP7" `
+-each tc=6+0.06 timemargin=200 `
+-openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
 -games 2 `
 -rounds 25000 `
 -repeat 2 `
 -maxmoves 200 `
+-draw movenumber=40 movecount=4 score=5 `
+-recover `
 -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05 `
--concurrency 8 `
+-concurrency 10 `
 -ratinginterval 10
 */

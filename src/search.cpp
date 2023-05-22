@@ -239,6 +239,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         //     adjustEval(tte, ss->eval);
         // }
     }
+
     bool improving = (!inCheck and (ply >= 2 and ((ss - 2)->staticEval == noScore or ss->staticEval > (ss - 2)->staticEval)));
 
 
@@ -318,6 +319,8 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
     // Iterate over the moves
     score_t bestScore = -checkMateScore;
     move_t bestMove = 0;
+    int movesSeen = 0;
+    bool skipAllQuiets = false;
 
     for (int i = 0; i < moves.sz; i++){
         // Bring best move up
@@ -329,6 +332,9 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         movescore_t history;
         bool ttSoundCapt = (foundEntry and tte.depth > 0 and board.moveCaptType(tte.bestMove) != noPiece);
         bool isQuiet = movePromo(move) == noPiece and board.moveCaptType(move) == noPiece;
+        bool killerOrCounter = (move == sd.killers[ply][0] or move == sd.killers[ply][1] or (ply >= 1 and move == *((ss - 1)->counter)));
+
+        movesSeen++;
 
         if (isQuiet){
             quiets.addMove(move);
@@ -337,48 +343,51 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         
         // Step 10) Move Count Pruning (~13.8 elo)
         // Complements LMR. If we are at low depth and searched enough
-        // quiet moves we can stop searching all other quiet moves
-
-        // Conditions to not search current move:
-        // 1) Not PV
-        // 2) Not in check
-        // 3) Current score isn't losing mate score
-        // 4) Depth is low
-        // 5) Quiet
-        // 6) We've searched enough quiets
+        // quiet moves we can stop searching all other quiet moves.
 
         if (!pvNode
             and !inCheck
             and bestScore > -foundMate 
             and depth <= 4
-            and isQuiet
-            and quiets.sz - 1 >= (improving ? 2 * depth * depth + 1 : 4 * depth * depth))
+            and quiets.sz >= 1 + 3 * depth * depth + improving)
         {
-             continue;
+             skipAllQuiets = true;
         }
 
-        // Step 11) Futility Pruning
-        // We skip quiet moves if our static eval is way below alpha
+        // Step 11) Quiet move pruning
 
+        if (isQuiet and bestScore > -foundMate){
+            depth_t lmrDepth = std::max(1, depth - lmrReduction[depth][i]);
 
+            // A) Late move quiet pruning
 
-        // Step 12) Continuation based pruning
+            // B) Futility pruning
+
+            // C) History based pruning (9 elo)
+            // Prune non-killer and non-counter quiet moves that have a bad history.
+            
+            if (!killerOrCounter
+                and lmrDepth <= 2
+                and history <= -1408 * depth - 256 * improving)
+            {
+                continue;
+            }
+        }
+
+        // Code that checks if skip quiets is true
+        if (isQuiet and skipAllQuiets)
+            continue;
+        
+
 
 
         // Step 12) SEE Pruning (~25 elo)
-        // We skip moves with a bad SEE...
-
-        // Conditions to not search current move:
-        // 1) Not root
-        // 2) Current score isn't mate score
-        // 3) Enough depth
-        // 3) We searched >2 nodes
-        // 4) Bad SEE
+        // We skip moves with a bad SEE
 
         if (ply > 0
             and bestScore > -foundMate 
             and depth <= 5
-            and i >= 2)
+            and movesSeen >= 3)
         {
             score_t cutoff = isQuiet ? -60 * depth : -55 * depth;
 
@@ -407,7 +416,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
 
         if (!inCheck
             and depth >= 3
-            and i >= 2 + 2 * pvNode)
+            and movesSeen >= 3 + 2 * pvNode)
         {
             depth_t R = lmrReduction[depth][i];
             
@@ -418,14 +427,14 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
             R -= !isQuiet;
 
             // Decrease reduction if special quiet
-            R -= (move == sd.killers[ply][0] or move == sd.killers[ply][1] or (ply >= 1 and move == *((ss - 1)->counter)));
+            R -= killerOrCounter;
 
             // Increase reduction if our TT move is a capture
             R += ttSoundCapt;
             
             // Increase reduction if we aren't improving
             R += !improving;
-
+            
             // If quiet, adjust reduction based on history
             if (isQuiet)
                 R -= std::clamp(history / 4096, -2, 2);
@@ -444,7 +453,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
 
         if (score > alpha){
             // Fully evaluate node if first move
-            if (!i){ 
+            if (movesSeen == 1){ 
                 score = -negamax<true>(-beta, -alpha, ply + 1, depth - 1, board, sd, ss + 1);
             }
             // Otherwise do zero window search: [alpha, alpha + 1]
