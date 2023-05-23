@@ -19,10 +19,12 @@ static inline void checkEnd(searchData &sd){
 
 static inline void adjustEval(ttEntry &tte, score_t &staticEval){
     // Adjust evaluation based on TT (~10 elo)
-    // Note that tte must exist and have a score
+    // We snap our static evaluation to the TT value based on TT bound
+    // Note that we assume that tte exists and has a score
+
     if (decodeBound(tte.ageAndBound) == boundExact
-        or (decodeBound(tte.ageAndBound) == boundLower and tte.score < staticEval)
-        or (decodeBound(tte.ageAndBound) == boundUpper and tte.score > staticEval))
+        or (decodeBound(tte.ageAndBound) == boundLower and staticEval < tte.score)
+        or (decodeBound(tte.ageAndBound) == boundUpper and staticEval > tte.score))
     {
         staticEval = tte.score;
     }
@@ -66,15 +68,16 @@ template<bool pvNode> static score_t qsearch(score_t alpha, score_t beta, depth_
         }
     }
 
-    // 3) Standing Pat
+    // Step 3) Static evaluation
+
     if (!inCheck){
         ss->staticEval = foundEntry ? tte.staticEval : board.eval();
 
-        // Adjust static eval based on TT
-        // if (foundEntry and tte.score != noScore){
-        //     adjustEval(tte, ss->eval);
-        // }
-
+        // Adjust static eval based on TT (~10 elo)
+        if (foundEntry and tte.score != noScore)
+            adjustEval(tte, ss->staticEval);
+        
+        // Assume that there is some quiet/capture that will allow the static eval to remain above
         if (ss->staticEval >= beta)
             return ss->staticEval;
 
@@ -245,13 +248,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
 
     // Step 5) Reverse Futility Pruning (~75 elo)
     // If the static evaluation is far above beta, we can assume that
-    // it will most definitely fail high!
-
-    // Conditions:
-    // 1) Not at PV / root
-    // 2) Not in check
-    // 3) Enough depth left
-    // 4) Static evaluation is far above beta (see code for exact details)
+    // it will fail high!
 
     if (!pvNode 
         and !inCheck
@@ -263,16 +260,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
 
     // 7) Null Move Pruning (~60 elo)
     // We evaluate the position if we skipped our turn. 
-    // We check if doing so causes a beta cutoff. So we use zero window [beta - 1, beta].
-    // Our score will be a lowerbound even if it does.
-
-    // Conditions:
-    // 1) Not at PV / root
-    // 2) Not in check (doing no move here is illegal)
-    // 3) Depth >= 3
-    // 4) Static eval greater than beta minus some value
-    // 5) Previous move wasn't a null move
-    // 6) Have at least one major piece of our color left
+    // We then check if doing so causes a beta cutoff so we use zero window [beta - 1, beta].
 
     if (!pvNode 
         and !inCheck
@@ -287,9 +275,9 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
 
         board.makeNullMove();
         
-        // Search with reduced depth
         depth_t R = 3 + (depth / 3) + std::min((ss->staticEval - beta) / 200, 3);
         
+        // Search
         score_t score = -negamax<false>(-beta, -(beta - 1), ply + 1, depth - R, board, sd, ss + 1);
 
         // Undo

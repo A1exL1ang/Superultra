@@ -82,8 +82,8 @@ int main(){
 }
 /*
 .\cutechess-cli `
+-engine conf="E47_TTinQS" `
 -engine conf="E44_Probcut4" `
--engine conf="E40_FutilityPruning" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
 -games 2 `
