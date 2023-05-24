@@ -4,8 +4,6 @@
 #include "types.h"
 #include "attacks.h"
 
-const static score_t pieceValSEE[7] = {0, 99, 334, 346, 544, 1032, 0};
-
 bool position::seeGreater(move_t move, score_t threshold){
     // SEE basically calculates the result of a qsearch if we only consider the
     // destination square. We return whether the result is >= capture. We 
@@ -27,12 +25,12 @@ bool position::seeGreater(move_t move, score_t threshold){
     if (movePromo(move)) 
         return true;
     if (isEP(move))
-        return threshold <= pieceValSEE[pawn];
+        return threshold <= pieceScore[pawn];
     if (movePieceType == king and abs(getFile(st) - getFile(target)) == 2)
         return threshold <= 0;
 
     // Perform the initial capture (note that capt == noPiece may be true)
-    score_t score = pieceValSEE[moveCaptType];
+    score_t score = pieceScore[moveCaptType];
 
     // Cur player is not above the threshold after initially capturing
     if (score < threshold)
@@ -75,7 +73,7 @@ bool position::seeGreater(move_t move, score_t threshold){
             return (!col == turn); 
 
         // We capture pieceTypeToBeCaptured and update score (make everything relative to us)
-        score = -score + pieceValSEE[pieceTypeToBeCaptured];
+        score = -score + pieceScore[pieceTypeToBeCaptured];
         threshold = -threshold;
         
         // If the opponent's last capture was with the king and we "captured" it then we win

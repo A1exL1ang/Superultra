@@ -60,6 +60,7 @@ const bitboard_t all = -1;
 // Score constants
 const score_t checkMateScore = 32000;
 const score_t foundMate = 31000;
+const score_t pieceScore[7] = {0, 99, 334, 346, 544, 1032, 0};
 
 // Null constants
 const score_t noScore = 32001;

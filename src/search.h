@@ -10,7 +10,8 @@ struct searchStack{
     score_t staticEval;
     move_t excludedMove;
     move_t move;
-
+    int dextension;
+    
     move_t *counter;
     movescore_t (*contHist)[14][64];
 };

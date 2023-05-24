@@ -16,9 +16,9 @@
 
 const int clusterSize = 4;
 
-const ttFlagAge_t boundExact = 0; 
 const ttFlagAge_t boundLower = 64;
 const ttFlagAge_t boundUpper = 128;
+const ttFlagAge_t boundExact = boundLower | boundUpper; 
 const ttFlagAge_t ageCycle = 63;
 
 const ttFlagAge_t ageBits = 63;

@@ -82,8 +82,8 @@ int main(){
 }
 /*
 .\cutechess-cli `
--engine conf="E47_TTinQS" `
--engine conf="E44_Probcut4" `
+-engine conf="E55_NE" `
+-engine conf="E54_DE" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
 -games 2 `
@@ -95,4 +95,28 @@ int main(){
 -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05 `
 -concurrency 8 `
 -ratinginterval 10
+
+
+
+
+Score of E53_SE vs E47_TTinQS: 263 - 159 - 444  [0.560] 866
+...      E53_SE playing White: 169 - 48 - 216  [0.640] 433
+...      E53_SE playing Black: 94 - 111 - 228  [0.480] 433
+...      White vs Black: 280 - 142 - 444  [0.580] 866
+Elo difference: 41.9 +/- 16.1, LOS: 100.0 %, DrawRatio: 51.3 %
+SPRT: llr 2.95 (100.2%), lbound -2.94, ubound 2.94 - H1 was accepted
+
+Score of E54_DE vs E53_SE: 568 - 537 - 1577  [0.506] 2682
+...      E54_DE playing White: 356 - 195 - 790  [0.560] 1341
+...      E54_DE playing Black: 212 - 342 - 787  [0.452] 1341
+...      White vs Black: 698 - 407 - 1577  [0.554] 2682
+Elo difference: 4.0 +/- 8.4, LOS: 82.4 %, DrawRatio: 58.8 %
+SPRT: llr 0.409 (13.9%), lbound -2.94, ubound 2.94
+
+Score of E55_NE vs E54_DE: 645 - 584 - 1687  [0.510] 2916
+...      E55_NE playing White: 397 - 238 - 824  [0.554] 1459
+...      E55_NE playing Black: 248 - 346 - 863  [0.466] 1457
+...      White vs Black: 743 - 486 - 1687  [0.544] 2916
+Elo difference: 7.3 +/- 8.2, LOS: 95.9 %, DrawRatio: 57.9 %
+SPRT: llr 1.37 (46.5%), lbound -2.94, ubound 2.94
 */
