@@ -3,6 +3,8 @@
 #include "movescore.h"
 #include <math.h>
 
+// timeMan tm;
+
 static depth_t lmrReduction[maximumPly + 5][maxMovesInTurn];
 
 void initLMR(){
@@ -36,8 +38,10 @@ template<bool pvNode> static score_t qsearch(score_t alpha, score_t beta, depth_
 
     sd.selDepth = std::max(sd.selDepth, ply);
     
-    if ((sd.nodes & 2047) == 0)
+    if ((sd.nodes & 2047) == 0){
+        // sd.stopped = tm.stopDuringSearch();
         checkEnd(sd);
+    }
 
     if (sd.stopped)
         return 0;
@@ -112,7 +116,7 @@ template<bool pvNode> static score_t qsearch(score_t alpha, score_t beta, depth_
         // SEE Pruning (~6.5 elo)
         // Skip moves with a pretty bad SEE
 
-        if (movesSeen > 1 and bestScore > -foundMate and !board.seeGreater(move, -50)){
+        if (bestScore > -foundMate and !board.seeGreater(move, -50)){
             continue;
         }
 
@@ -174,8 +178,10 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
     sd.pvLength[ply] = ply;
     sd.selDepth = std::max(sd.selDepth, ply);
     
-    if ((sd.nodes & 2047) == 0)
+    if ((sd.nodes & 2047) == 0){
         checkEnd(sd);
+        // sd.stopped = tm.stopDuringSearch();
+    }
     
     if (sd.stopped)
         return 0;
@@ -393,15 +399,13 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         // pruning because we want the lateness in move ordering to affect pruning. However, there is no need to use
         // lmrDepth in move count pruning since we are literally pruning nodes if they are late...
 
-        if (isQuiet and bestScore > -foundMate){
+        if (isQuiet and bestScore > -foundMate and !inCheck){
             depth_t lmrDepth = std::max(1, depth - lmrReduction[depth][i]);
 
             // A) Quiet Move Count Pruning (~14 elo)
             // If we are at low depth and searched enough quiet moves we can stop searching all other quiet moves.
 
-            if (!pvNode
-                and !inCheck
-                and depth <= 4
+            if (depth <= 4
                 and quiets.sz >= 1 + 3 * depth * depth + improving)
             {
                 continue;
@@ -410,8 +414,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
             // B) Futility Pruning (~20 elo)
             // Skip quiet moves if we are way below alpha.
 
-            if (!inCheck
-                and lmrDepth <= 4
+            if (lmrDepth <= 4
                 and ss->staticEval + 110 + 75 * lmrDepth + history / 160 < alpha)
             {
                 continue;
@@ -431,8 +434,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         // Step 12) SEE Pruning (~25 elo)
         // We skip moves with a bad SEE
 
-        if (ply > 0
-            and bestScore > -foundMate 
+        if (bestScore > -foundMate 
             and depth <= 5
             and movesSeen >= 3)
         {
@@ -483,7 +485,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
                 return singularBeta;
             }
 
-            // Potential multicut (since TT move is greater/equal to beta and some other move is greater/equal to singularBeta)
+            // Probable Multicut (since TT move is greater/equal to beta and some other move is greater/equal to singularBeta)
             else if (tte.score >= beta){
                 extension = -1 - !pvNode;
             }

@@ -1,3 +1,4 @@
+#include <chrono>
 #include "types.h"
 #include "helpers.h"
 #include "uci.h"
@@ -14,7 +15,28 @@ struct timer{
     uint64 timeElapsed();
     bool outOfTime();
 };
+/*
+struct timeMan{
+    timePoint_t startTime;
 
-const uint64 moveLag = 30;
+    timePoint_t averageTime;
+    timePoint_t maximumTime;
+    timePoint_t optimalTime;
+
+    move_t lastBestMove; 
+    score_t lastScore;
+    int stability;
+
+    void init(color_t col, uciParams uci);
+    void update(depth_t depthSearched, move_t bestMove, score_t score, double timeSpentOnNonBest);
+    bool stopAfterSearch();
+    bool stopDuringSearch();
+};
+*/
+const timePoint_t moveLag = 30;
+
+inline timePoint_t getTime(){
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
 
 uint64 findOptimalTime(color_t col, uciParams uci);

@@ -37,7 +37,7 @@ using movescore_t = int32;
 using spair_t = int32;
 
 using move_extended_t = uint32;
-
+using timePoint_t = uint64;
 using bitboard_t = uint64;
 using ttKey_t = uint64;
 
