@@ -6,6 +6,8 @@
 #include "timecontrol.h"
 #include "uci.h"
 
+const static timePoint_t moveLag = 30;
+
 uint64 timer::getTime(){
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
@@ -39,18 +41,15 @@ void timeMan::init(color_t col, uciParams uci){
     stability = 0;
     startTime = getTime();
 
-    // X base time, Y increment, Z moves till reset
-    if (uci.movesToGo > 0){
-        timePoint_t timeLeft = uci.timeLeft[col] + (uci.timeIncr[col] * uci.movesToGo) - (moveLag * uci.movesToGo);
+    // X base time, Y increment, Z moves till reset (Z is 50 if there is no time reset)
 
-        // Don't use more than 75% of time available
-        optimalTime = averageTime = timeLeft / uci.movesToGo;
-        maximumTime = 3 * timeLeft / 4;
-    }
-    // X base time, Y increment
-    else{
-        
-    }
+    int mtg = (uci.movesToGo == 0) ? 50 : uci.movesToGo;
+
+    timePoint_t totalTime = uci.timeLeft[col] + (uci.timeIncr[col] * mtg) - moveLag * mtg;
+    
+    optimalTime = averageTime = std::clamp(static_cast<double>(totalTime) / mtg, (0.95 * uci.timeLeft[col]) / mtg, 0.8 * uci.timeLeft[col]);
+
+    maximumTime = std::min(5.5 * averageTime, 0.8 * uci.timeLeft[col]);
 }
 
 void timeMan::update(depth_t depthSearched, move_t bestMove, score_t score, double percentTimeSpentOnNonBest){

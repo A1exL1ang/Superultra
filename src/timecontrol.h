@@ -33,8 +33,6 @@ struct timeMan{
     bool stopDuringSearch();
 };
 
-const timePoint_t moveLag = 30;
-
 inline timePoint_t getTime(){
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }

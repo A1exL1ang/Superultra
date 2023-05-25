@@ -94,8 +94,8 @@ int main(){
 }
 /*
 .\cutechess-cli `
+-engine conf="E63_TimemanUpdate5" `
 -engine conf="E57_Timeman" `
--engine conf="E56_Neatness" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
 -games 2 `

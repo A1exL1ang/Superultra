@@ -7,7 +7,7 @@
 struct uciParams{
     uint64 timeLeft[2] = {0, 0};
     uint64 timeIncr[2] = {0, 0};
-    uint64 movesToGo = 50;
+    uint64 movesToGo = 0;
     uint64 nodeLim = 1e18;
     bool infiniteSearch = 0;
 
