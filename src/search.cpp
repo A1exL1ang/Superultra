@@ -3,7 +3,7 @@
 #include "movescore.h"
 #include <math.h>
 
-// timeMan tm;
+static timeMan tm;
 
 static depth_t lmrReduction[maximumPly + 5][maxMovesInTurn];
 
@@ -16,7 +16,7 @@ void initLMR(){
 }
 
 static inline void checkEnd(searchData &sd){
-    sd.stopped = sd.T.outOfTime();
+    sd.stopped = tm.stopDuringSearch();
 }
 
 static inline void adjustEval(ttEntry &tte, score_t &staticEval){
@@ -104,14 +104,11 @@ template<bool pvNode> static score_t qsearch(score_t alpha, score_t beta, depth_
     // 5) Iterate over moves
     score_t bestScore = -checkMateScore;
     move_t bestMove = 0;
-    int movesSeen = 0;
 
     for (int i = 0; i < moves.sz; i++){
         // Bring best
         moves.bringBest(i);
         move_t move = moves.moves[i].move;
-
-        movesSeen++;
 
         // SEE Pruning (~6.5 elo)
         // Skip moves with a pretty bad SEE
@@ -382,6 +379,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         score_t score = checkMateScore;
         movescore_t history;
         depth_t extension = 0;
+        uint64 nodesBefore = sd.nodes;
 
         bool ttSoundCapt = (foundEntry and tte.depth > 0 and board.moveCaptType(tte.bestMove) != noPiece);
         bool isQuiet = movePromo(move) == noPiece and board.moveCaptType(move) == noPiece;
@@ -571,6 +569,10 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         // Unmake
         board.undoLastMove();
 
+        // If at root, update amount of time we spent searching that move
+        if (ply == 0)
+            sd.moveNodeStat[moveFrom(move)][moveTo(move)] += sd.nodes - nodesBefore;
+
         if (score > bestScore){
             bestScore = score;
             bestMove = move;
@@ -686,17 +688,16 @@ score_t aspirationWindowSearch(score_t prevEval, depth_t depth, position &board,
     return 0;
 }
 
-void searchDriver(uint64 timeAlloted, position boardToSearch){
+void searchDriver(uciParams uci, position boardToSearch){
 
-
-    
     move_t bestMove = 0;
     score_t score = 0;
 
     position board = boardToSearch;
     searchData sd = {};
 
-    sd.T.beginTimer(timeAlloted);
+    tm.init(board.getTurn(), uci);
+    sd.T.beginTimer();
 
     for (depth_t startingDepth = 1; startingDepth <= maximumPly; startingDepth++){
 
@@ -727,6 +728,13 @@ void searchDriver(uint64 timeAlloted, position boardToSearch){
                 std::cout<<moveToString(sd.pvTable[0][i])<<" ";
 
             std::cout<<std::endl;
+
+            // Update time
+
+            tm.update(startingDepth, bestMove, score, 1.0 - (static_cast<double>(sd.moveNodeStat[moveFrom(bestMove)][moveTo(bestMove)]) / static_cast<double>(sd.nodes)));
+            
+            if (tm.stopAfterSearch())
+                break;
         }
     }
     globalTT.incrementAge();

@@ -32,7 +32,7 @@ uint64 findOptimalTime(color_t col, uciParams uci){
 
 
 
-/*
+
 void timeMan::init(color_t col, uciParams uci){
     lastBestMove = nullOrNoMove;
     lastScore = noScore;
@@ -43,9 +43,9 @@ void timeMan::init(color_t col, uciParams uci){
     if (uci.movesToGo > 0){
         timePoint_t timeLeft = uci.timeLeft[col] + (uci.timeIncr[col] * uci.movesToGo) - (moveLag * uci.movesToGo);
 
-        // Don't use more than 40% of time available
+        // Don't use more than 75% of time available
         optimalTime = averageTime = timeLeft / uci.movesToGo;
-        maximumTime = 2 * timeLeft / 5;
+        maximumTime = 3 * timeLeft / 4;
     }
     // X base time, Y increment
     else{
@@ -63,23 +63,27 @@ void timeMan::update(depth_t depthSearched, move_t bestMove, score_t score, doub
 
     double stabilityScale = 1.2 - 0.05 * stability;
 
-    // Logistically scale time based on score fluctuations
-    // Range is [0.5, 1.5] (note that if diff is negative, then we scale up and vice versa)
+    // Exponentially scale time based on score fluctuations (formula from Stash Bot)
+    // Range is [0.5, 2] (we scale up when score falls and down otherwise)
 
     score_t diff = score - lastScore;
-    double scoreChangeScale = abs(score) < foundMate ? 1.0 : (1.0 / (1.0 + exp(0.035 * diff)) + 0.5);
+    double scoreChangeScale = pow(2, -1 * std::clamp(diff / 100.0, -1.0, 1.0));
     
-    // Linearly scale time spent on non-best move nodes 
+    // Linearly scale time based on time spent on non-best move nodes 
     // Note that the larger the value is the more complex our position is so the higher our scale should be
-    // Range is [0.75, 1.25]
+    // Range is [0.7, 1.7] and 30% time is average which maps to 1.0
 
-    double complexityScale = 0.75 + (percentTimeSpentOnNonBest / 2);
+    double complexityScale = 0.70 + percentTimeSpentOnNonBest;
 
     // Update info    
 
     lastBestMove = bestMove;
     lastScore = score;
-    optimalTime = averageTime * stabilityScale * scoreChangeScale * complexityScale;
+
+    // First few depths are unstable
+
+    if (depthSearched >= 10)
+        optimalTime = averageTime * stabilityScale * scoreChangeScale * complexityScale;
 }
 
 bool timeMan::stopAfterSearch(){
@@ -89,4 +93,3 @@ bool timeMan::stopAfterSearch(){
 bool timeMan::stopDuringSearch(){
     return getTime() - startTime >= maximumTime;
 }
-*/

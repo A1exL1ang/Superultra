@@ -81,15 +81,21 @@ int main(){
     // 3504426
     // counter: 3064725
     // probcut: 790735
-    // 1608660
-    searchDriver(20000, board);
+    // 2787455
+
+    uciParams uci;
+    uci.timeIncr[board.getTurn()] = 0;
+    uci.movesToGo = 1;
+    uci.timeLeft[board.getTurn()] = 20000;
+
+    searchDriver(uci, board);
     board.makeMove(stringToMove("e2a6"));
-    searchDriver(2000, board);
+    searchDriver(uci, board);
 }
 /*
 .\cutechess-cli `
+-engine conf="E57_Timeman" `
 -engine conf="E56_Neatness" `
--engine conf="E55_NE" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
 -games 2 `

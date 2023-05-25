@@ -26,13 +26,14 @@ struct searchData{
     movescore_t history[2][64][64] = {};
     movescore_t contHist[2][14][64][14][64] = {};
 
-    bool stopped = false;
-
     uint64 nodes = 0;
+    uint64 moveNodeStat[64][64] = {};
+
     depth_t selDepth = 0;
 
     timer T;
+    bool stopped = false;
 };
 
 void initLMR();
-void searchDriver(uint64 timeAlloted, position boardToSearch);
+void searchDriver(uciParams uci, position boardToSearch);

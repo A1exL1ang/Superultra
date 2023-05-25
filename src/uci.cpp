@@ -292,9 +292,8 @@ void proccessGo(std::istringstream &iss){
         }
     }
     
-    // Calculate time and search
-    uint64 searchTime = uci.infiniteSearch ? uint64(1e18) : findOptimalTime(board.getTurn(), uci);
-    searchDriver(searchTime, board);
+    // Perform the search
+    searchDriver(uci, board);
 }
 
 void setOption(std::istringstream &iss){

@@ -15,7 +15,7 @@ struct timer{
     uint64 timeElapsed();
     bool outOfTime();
 };
-/*
+
 struct timeMan{
     timePoint_t startTime;
 
@@ -32,7 +32,7 @@ struct timeMan{
     bool stopAfterSearch();
     bool stopDuringSearch();
 };
-*/
+
 const timePoint_t moveLag = 30;
 
 inline timePoint_t getTime(){
