@@ -667,6 +667,9 @@ score_t aspirationWindowSearch(score_t prevEval, depth_t depth, position &board,
             // No alpha = (alpha + beta) / 2 because "it doesn't work" according
             // to some person on discord. After testing, I realized that they were correct...
             beta = std::min(score + delta, static_cast<int>(checkMateScore));
+            
+            if (abs(score) < foundMate and depth >= 8)
+                depth--;
         }
 
         // Score is exact

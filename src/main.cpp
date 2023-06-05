@@ -90,12 +90,17 @@ int main(){
 
     searchDriver(uci, board);
     board.makeMove(stringToMove("e2a6"));
+
+    uci.timeIncr[board.getTurn()] = 0;
+    uci.movesToGo = 1;
+    uci.timeLeft[board.getTurn()] = 20000;
+
     searchDriver(uci, board);
 }
 /*
 .\cutechess-cli `
+-engine conf="E67_AWupdate" `
 -engine conf="E63_TimemanUpdate5" `
--engine conf="E57_Timeman" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
 -games 2 `

@@ -65,7 +65,7 @@ void timeMan::update(depth_t depthSearched, move_t bestMove, score_t score, doub
     // Exponentially scale time based on score fluctuations (formula from Stash Bot)
     // Range is [0.5, 2] (we scale up when score falls and down otherwise)
 
-    score_t diff = score - lastScore;
+    int diff = score - lastScore;
     double scoreChangeScale = pow(2, -1 * std::clamp(diff / 100.0, -1.0, 1.0));
     
     // Linearly scale time based on time spent on non-best move nodes 
