@@ -15,10 +15,13 @@ struct uciParams{
     std::vector<std::string> movesToSearch;
 };
 
+// Number of thread global
+extern int threadCount;
+
 // FEN of the default position
 const std::string startPosFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-// UCI conversion fcuntions for printing and debugging
+// UCI conversion functions for printing and debugging
 std::string squareToString(square_t sq);
 std::string moveToString(move_t move);
 move_t stringToMove(std::string move);

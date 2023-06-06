@@ -52,7 +52,7 @@ int main(){
     initTT();
 
     // Recent loss: 0.004985
-    if (true){
+    if (false){
         doLoop();
         return 0;
     }
@@ -78,6 +78,7 @@ int main(){
       
     position board;
     board.readFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+    board.getStackIndex();
     // 3504426
     // counter: 3064725
     // probcut: 790735
@@ -88,7 +89,7 @@ int main(){
     uci.movesToGo = 1;
     uci.timeLeft[board.getTurn()] = 20000;
 
-    searchDriver(uci, board);
+    beginSearch(board, uci);
     board.makeMove(stringToMove("e2a6"));
 
     uci.timeIncr[board.getTurn()] = 0;
@@ -99,8 +100,8 @@ int main(){
 }
 /*
 .\cutechess-cli `
+-engine conf="E71_AWupdate1" `
 -engine conf="E67_AWupdate" `
--engine conf="E63_TimemanUpdate5" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
 -games 2 `

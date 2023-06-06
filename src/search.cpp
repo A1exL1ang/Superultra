@@ -2,6 +2,7 @@
 #include "timecontrol.h"
 #include "movescore.h"
 #include <math.h>
+#include <thread>
 
 static timeMan tm;
 
@@ -38,11 +39,9 @@ template<bool pvNode> static score_t qsearch(score_t alpha, score_t beta, depth_
 
     sd.selDepth = std::max(sd.selDepth, ply);
     
-    if ((sd.nodes & 2047) == 0){
-        // sd.stopped = tm.stopDuringSearch();
+    if ((sd.nodes & 2047) == 0)
         checkEnd(sd);
-    }
-
+    
     if (sd.stopped)
         return 0;
 
@@ -175,10 +174,8 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
     sd.pvLength[ply] = ply;
     sd.selDepth = std::max(sd.selDepth, ply);
     
-    if ((sd.nodes & 2047) == 0){
+    if ((sd.nodes & 2047) == 0)
         checkEnd(sd);
-        // sd.stopped = tm.stopDuringSearch();
-    }
     
     if (sd.stopped)
         return 0;
@@ -239,19 +236,13 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
     if (depth >= 4 and !foundEntry and ss->excludedMove == nullOrNoMove)
         depth--;
 
-    // 4) Static eval and improving
+    // 4) Static eval and improving (adjusting eval based on TT here loses elo for some reason)
 
     if (!inCheck){
         ss->staticEval = foundEntry ? tte.staticEval : board.eval();
-
-        // Adjust static eval based on TT
-        // if (foundEntry and tte.score != noScore){
-        //     adjustEval(tte, ss->staticEval);
-        // }
     }
 
     bool improving = (!inCheck and (ply >= 2 and ((ss - 2)->staticEval == noScore or ss->staticEval > (ss - 2)->staticEval)));
-
 
     // Step 5) Reverse Futility Pruning (~75 elo)
     // If the static evaluation is far above beta, we can assume that
@@ -631,13 +622,6 @@ score_t aspirationWindowSearch(score_t prevEval, depth_t depth, position &board,
         searchArr[i].dextension = 0;
     }
 
-    // If our previous eval was big in magnitude, increase window since scores
-    // will probably increase/decrease in larger strides. Won't make
-    // that big of a difference because we will probably win/lose either way.
-
-    if (abs(prevEval) >= 425 and abs(prevEval) <= foundMate)
-        delta = 20;
-    
     // Now we init alpha and beta with our window
     score_t alpha = std::max(prevEval - delta, static_cast<int>(-checkMateScore));
     score_t beta = std::min(prevEval + delta, static_cast<int>(checkMateScore));
@@ -667,7 +651,7 @@ score_t aspirationWindowSearch(score_t prevEval, depth_t depth, position &board,
             // No alpha = (alpha + beta) / 2 because "it doesn't work" according
             // to some person on discord. After testing, I realized that they were correct...
             beta = std::min(score + delta, static_cast<int>(checkMateScore));
-            
+
             if (abs(score) < foundMate and depth >= 8)
                 depth--;
         }
@@ -690,6 +674,84 @@ score_t aspirationWindowSearch(score_t prevEval, depth_t depth, position &board,
     // Only reach here when out of time
     return 0;
 }
+
+// REMEMBER TO INCREMENT GLOBAL TT AGE
+
+void printInfo(searchData sd, depth_t startingDepth, score_t score){
+    std::cout<<"info depth "<<int(startingDepth);
+    std::cout<<" seldepth "<<int(sd.selDepth);
+            
+    if (abs(score) >= foundMate)
+        std::cout<<" score mate "<<(checkMateScore - abs(score) + 1) * (score > 0 ? 1 : -1) / 2;
+    else 
+        std::cout<<" score cp "<<score;
+            
+    std::cout<<" nodes "<<sd.nodes;
+    std::cout<<" time "<<sd.T.timeElapsed();
+    std::cout<<" nps "<<int(sd.nodes / (sd.T.timeElapsed() / 1000.0 + 0.00001));
+    std::cout<<" hashfull "<<globalTT.hashFullness();
+    std::cout<<" pv ";
+
+    for (depth_t i = 0; i < sd.pvLength[0]; i++) 
+        std::cout<<moveToString(sd.pvTable[0][i])<<" ";
+
+    std::cout<<std::endl;
+}
+
+void iterativeDeepening(position board, searchData sd, uciParams uci){
+    
+    move_t bestMove = nullOrNoMove;
+    score_t score = noScore;
+
+    // Only update timeman when in main thread
+    if (sd.threadId == 0)
+        tm.init(board.getTurn(), uci);
+    
+    for (depth_t startingDepth = 1; startingDepth <= maximumPly; startingDepth++){
+
+        sd.selDepth = 0;
+        score = aspirationWindowSearch(score, startingDepth, board, sd);
+
+        if (!sd.stopped){
+            // Print and update best move and timeman if we are in main thread
+            if (sd.threadId == 0){
+                printInfo(sd, startingDepth, score);
+                bestMove = sd.pvTable[0][0];
+                tm.update(startingDepth, bestMove, score, 1.0 - (static_cast<double>(sd.moveNodeStat[moveFrom(bestMove)][moveTo(bestMove)]) / static_cast<double>(sd.nodes)));
+            }                
+            // See if we should continue to next depth
+            if (tm.stopAfterSearch())
+                break;
+        }
+    }
+    if (sd.threadId == 0)
+        std::cout<<"bestmove "<<moveToString(bestMove)<<std::endl;
+}
+
+void beginSearch(position board, uciParams uci){
+
+    tm.init(board.getTurn(), uci);
+
+    std::thread threads[threadCount];
+
+    for (int i = 0; i < threadCount; i++){
+        searchData sd = {};
+        sd.T.beginTimer();
+        sd.threadId = i;
+
+        // We must copy the board to deal with the stack pointer
+        position newBoard;
+        memcpy(&newBoard, &board, sizeof(position));
+        newBoard.setStackPointer(board.getStackIndex());
+        std::cout<<board.getStackIndex()<<std::endl;
+        threads[i] = std::thread(iterativeDeepening, newBoard, sd, uci);
+    }
+    for (int i = 0; i < threadCount; i++)
+        threads[i].join();
+    
+    globalTT.incrementAge();
+}
+
 
 void searchDriver(uciParams uci, position boardToSearch){
 
@@ -742,5 +804,5 @@ void searchDriver(uciParams uci, position boardToSearch){
     }
     globalTT.incrementAge();
     std::cout<<"bestmove "<<moveToString(bestMove)<<std::endl;
-    
 }
+

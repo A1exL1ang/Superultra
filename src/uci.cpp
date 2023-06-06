@@ -7,6 +7,7 @@
 #include "uci.h"
 #include "search.h"
 
+int threadCount = 1;
 static position board;
 
 void position::resetStack(){
@@ -95,6 +96,9 @@ void position::readFen(std::string fen){
     allBB = 0;
 
     stk = historyArray;
+    std::cout<<(stk - historyArray)<<std::endl;
+    getStackIndex();
+
     stk->captPieceType = noPiece;
     stk->castleRights = 0;
     stk->epFile = noEP;
@@ -138,6 +142,10 @@ void position::readFen(std::string fen){
     
     // Step 8) Refresh NNUE
     stk->nnue.refresh(board, kingSq(white), kingSq(black));
+
+
+    std::cout<<(stk - historyArray)<<std::endl;
+    getStackIndex();
 }
 
 std::string position::getFen(){

@@ -17,11 +17,13 @@ struct searchStack{
 };
 
 struct searchData{
+    int threadId;
+
     move_t pvTable[maximumPly + 5][maximumPly + 5] = {};
     depth_t pvLength[maximumPly + 5] = {};
     
     move_t killers[maximumPly + 5][2] = {};
-    move_t counter[14][64];
+    move_t counter[14][64] = {};
 
     movescore_t history[2][64][64] = {};
     movescore_t contHist[2][14][64][14][64] = {};
@@ -37,3 +39,4 @@ struct searchData{
 
 void initLMR();
 void searchDriver(uciParams uci, position boardToSearch);
+void beginSearch(position board, uciParams uci);
