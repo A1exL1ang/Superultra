@@ -2,7 +2,7 @@
 #include "tt.h"
 #include "helpers.h"
 #include "types.h"
-#include "timecontrol.h"
+#include "uci.h"
 
 #pragma once
 
@@ -16,9 +16,20 @@ struct searchStack{
     movescore_t (*contHist)[14][64];
 };
 
+struct searchResultData{
+    depth_t depthSearched;
+    depth_t selDepth;
+    score_t score;
+    std::vector<std::string> pvMoves; 
+};
+
 struct searchData{
     int threadId;
+    bool stopped = false;
 
+    depth_t selDepth = 0;
+    searchResultData result;
+    
     move_t pvTable[maximumPly + 5][maximumPly + 5] = {};
     depth_t pvLength[maximumPly + 5] = {};
     
@@ -30,13 +41,7 @@ struct searchData{
 
     uint64 nodes = 0;
     uint64 moveNodeStat[64][64] = {};
-
-    depth_t selDepth = 0;
-
-    timer T;
-    bool stopped = false;
 };
 
 void initLMR();
-void searchDriver(uciParams uci, position boardToSearch);
 void beginSearch(position board, uciParams uci);

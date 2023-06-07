@@ -11,8 +11,8 @@ void position::addPiece(piece_t pieceType, square_t sq, color_t col, bool update
     colorBB[col] ^= (1ULL << sq);
     allBB ^= (1ULL << sq);
     board[sq] = encodePiece(pieceType, col);
-    stk->zhash ^= ttRngPiece[pieceType][col][sq];
-    if (updateAccum) stk->nnue.addFeature(pieceType, sq, col, kingSq(white), kingSq(black));
+    pos[stk].zhash ^= ttRngPiece[pieceType][col][sq];
+    if (updateAccum) pos[stk].nnue.addFeature(pieceType, sq, col, kingSq(white), kingSq(black));
 }
 
 void position::removePiece(square_t sq, bool updateAccum){
@@ -25,8 +25,8 @@ void position::removePiece(square_t sq, bool updateAccum){
     colorBB[col] ^= (1ULL << sq);
     allBB ^= (1ULL << sq);
     board[sq] = 0;
-    stk->zhash ^= ttRngPiece[pieceType][col][sq];
-    if (updateAccum) stk->nnue.removeFeature(pieceType, sq, col, kingSq(white), kingSq(black));
+    pos[stk].zhash ^= ttRngPiece[pieceType][col][sq];
+    if (updateAccum) pos[stk].nnue.removeFeature(pieceType, sq, col, kingSq(white), kingSq(black));
 }
 
 void position::movePiece(piece_t piece, square_t st, square_t en, color_t col, bool updateAccum){
@@ -37,8 +37,8 @@ void position::movePiece(piece_t piece, square_t st, square_t en, color_t col, b
     allBB ^= (1ULL << st) ^ (1ULL << en);
     board[st] = noPiece;
     board[en] = encodePiece(piece, col);
-    stk->zhash ^= ttRngPiece[piece][col][st] ^ ttRngPiece[piece][col][en];
-    if (updateAccum) stk->nnue.updateMove(piece, st, en, col, kingSq(white), kingSq(black));
+    pos[stk].zhash ^= ttRngPiece[piece][col][st] ^ ttRngPiece[piece][col][en];
+    if (updateAccum) pos[stk].nnue.updateMove(piece, st, en, col, kingSq(white), kingSq(black));
 }
 
 void position::makeMove(move_t move){
@@ -52,17 +52,17 @@ void position::makeMove(move_t move){
     // Step 2) Copy to next stack
     stk++;
 
-    stk->captPieceType = (board[en] >> 1);
-    stk->prevMove = move;
+    pos[stk].captPieceType = (board[en] >> 1);
+    pos[stk].prevMove = move;
 
-    stk->castleRights = (stk - 1)->castleRights;
-    stk->epFile = (stk - 1)->epFile;
-    stk->zhash = (stk - 1)->zhash;
+    pos[stk].castleRights = pos[stk - 1].castleRights;
+    pos[stk].epFile = pos[stk - 1].epFile;
+    pos[stk].zhash = pos[stk - 1].zhash;
 
-    stk->halfMoveClock = (stk - 1)->halfMoveClock;
-    stk->moveCount = (stk - 1)->moveCount;
+    pos[stk].halfMoveClock = pos[stk - 1].halfMoveClock;
+    pos[stk].moveCount = pos[stk - 1].moveCount;
     
-    stk->nnue = (stk - 1)->nnue;
+    pos[stk].nnue = pos[stk - 1].nnue;
 
     // Step 3) En passant
     if (isEP(move)){ 
@@ -73,7 +73,7 @@ void position::makeMove(move_t move){
 
     // Step 4) Promotion
     else if (promo){
-        if (stk->captPieceType) removePiece(en, !refresh);
+        if (pos[stk].captPieceType) removePiece(en, !refresh);
         removePiece(st, !refresh);
         addPiece(promo, en, turn, !refresh);
     }
@@ -97,26 +97,26 @@ void position::makeMove(move_t move){
 
     // Step 6) All other moves
     else{
-        if (stk->captPieceType) removePiece(en, !refresh);
+        if (pos[stk].captPieceType) removePiece(en, !refresh);
         movePiece(pieceType, st, en, turn, !refresh);
     }
 
     // Step 7) Clock
-    stk->halfMoveClock = (stk->captPieceType or pieceType == pawn) ? 0 : stk->halfMoveClock + 1;
-    stk->moveCount++;
+    pos[stk].halfMoveClock = (pos[stk].captPieceType or pieceType == pawn) ? 0 : pos[stk].halfMoveClock + 1;
+    pos[stk].moveCount++;
 
     // Step 8a) Clear zhash of ep and castle rights so we can fold everything into it afterwards
-    stk->zhash ^= ttRngCastle[stk->castleRights] ^ ttRngEnpass[stk->epFile];
+    pos[stk].zhash ^= ttRngCastle[pos[stk].castleRights] ^ ttRngEnpass[pos[stk].epFile];
     
     // Step 8b) En passant rights
-    stk->epFile = (pieceType == pawn and abs(getRank(st) - getRank(en)) == 2) ? getFile(st) : noEP;
+    pos[stk].epFile = (pieceType == pawn and abs(getRank(st) - getRank(en)) == 2) ? getFile(st) : noEP;
     
     // Step 8c) Castle rights if we move king
     if (pieceType == king) 
-        stk->castleRights &= (turn == white ? (castleBlackK | castleBlackQ) : (castleWhiteK | castleWhiteQ));
+        pos[stk].castleRights &= (turn == white ? (castleBlackK | castleBlackQ) : (castleWhiteK | castleWhiteQ));
     
     // Step 8d) Castle rights if we altered any rook positions through moving or capturing 
-    stk->castleRights &= ((st != h1 and en != h1) * castleWhiteK)
+    pos[stk].castleRights &= ((st != h1 and en != h1) * castleWhiteK)
                        | ((st != a1 and en != a1) * castleWhiteQ)
                        | ((st != h8 and en != h8) * castleBlackK)
                        | ((st != a8 and en != a8) * castleBlackQ);
@@ -125,11 +125,11 @@ void position::makeMove(move_t move){
     turn ^= 1;
 
     // Step 8f) Update zhash
-    stk->zhash ^= ttRngCastle[stk->castleRights] ^ ttRngEnpass[stk->epFile] ^ ttRngTurn;
+    pos[stk].zhash ^= ttRngCastle[pos[stk].castleRights] ^ ttRngEnpass[pos[stk].epFile] ^ ttRngTurn;
 
     // Step 9) If our king is in a different bucket, we must refresh our NNUE
     if (refresh){
-        stk->nnue.refresh(board, kingSq(white), kingSq(black));
+        pos[stk].nnue.refresh(board, kingSq(white), kingSq(black));
     }
 }
 
@@ -138,14 +138,14 @@ void position::undoLastMove(){
     turn ^= 1;
 
     // Step 2) Decode and get info
-    move_t move = stk->prevMove;
+    move_t move = pos[stk].prevMove;
     square_t st = moveFrom(move);
     square_t en = moveTo(move);
     piece_t promo = movePromo(move);
     piece_t pieceType = getPieceType(board[en]);
 
     // Step 3) En passant (note isEP won't work since we are working backwards)
-    if (pieceType == pawn and getFile(st) != getFile(en) and !stk->captPieceType){
+    if (pieceType == pawn and getFile(st) != getFile(en) and !pos[stk].captPieceType){
         square_t captSq = (turn == white ? en - 8 : en + 8);
         movePiece(pawn, en, st, turn, false);
         addPiece(pawn, captSq, !turn, false);
@@ -155,7 +155,7 @@ void position::undoLastMove(){
     else if (promo){
         removePiece(en, false);
         addPiece(pawn, st, turn, false);
-        if (stk->captPieceType) addPiece(stk->captPieceType, en, !turn, false);
+        if (pos[stk].captPieceType) addPiece(pos[stk].captPieceType, en, !turn, false);
     }
 
     // Step 5) Castle
@@ -177,7 +177,7 @@ void position::undoLastMove(){
     // Step 6) All other moves
     else{
         movePiece(pieceType, en, st, turn, false);
-        if (stk->captPieceType) addPiece(stk->captPieceType, en, !turn, false);
+        if (pos[stk].captPieceType) addPiece(pos[stk].captPieceType, en, !turn, false);
     }
 
     // Step 7) Rollback stacks
@@ -187,18 +187,18 @@ void position::undoLastMove(){
 void position::makeNullMove(){
     // Update all the stack stuff
     stk++;
-    stk->captPieceType = noPiece;
-    stk->prevMove = nullOrNoMove;
+    pos[stk].captPieceType = noPiece;
+    pos[stk].prevMove = nullOrNoMove;
 
-    stk->castleRights = (stk - 1)->castleRights;
-    stk->epFile = noEP;
+    pos[stk].castleRights = pos[stk - 1].castleRights;
+    pos[stk].epFile = noEP;
 
-    stk->halfMoveClock = (stk - 1)->halfMoveClock + 1;
-    stk->moveCount = (stk - 1)->moveCount + 1;
+    pos[stk].halfMoveClock = pos[stk - 1].halfMoveClock + 1;
+    pos[stk].moveCount = pos[stk - 1].moveCount + 1;
 
-    stk->zhash = (stk - 1)->zhash ^ ttRngTurn ^ ttRngEnpass[(stk - 1)->epFile] ^ ttRngEnpass[stk->epFile];
+    pos[stk].zhash = pos[stk - 1].zhash ^ ttRngTurn ^ ttRngEnpass[pos[stk - 1].epFile] ^ ttRngEnpass[pos[stk].epFile];
 
-    stk->nnue = (stk - 1)->nnue;
+    pos[stk].nnue = pos[stk - 1].nnue;
 
     turn ^= 1;
 }

@@ -20,17 +20,17 @@ const static testStruct testFens[] = {
 
 void position::verifyConsistency(){
     // Verify hash
-    ttKey_t correctHash = ttRngCastle[stk->castleRights] 
-                        ^ ttRngEnpass[stk->epFile] 
+    ttKey_t correctHash = ttRngCastle[pos[stk].castleRights] 
+                        ^ ttRngEnpass[pos[stk].epFile] 
                         ^ (ttRngTurn * turn);
 
     for (square_t sq = 0; sq < 64; sq++)
         if (board[sq])
             correctHash ^= ttRngPiece[getPieceType(board[sq])][getPieceColor(board[sq])][sq];
 
-    if (correctHash != stk->zhash){
+    if (correctHash != pos[stk].zhash){
         std::cout<<"Fen: "<<getFen()<<std::endl;
-        std::cout<<"Got Hash: "<<stk->zhash<<", Expected hash: "<<correctHash<<std::endl;
+        std::cout<<"Got Hash: "<<pos[stk].zhash<<", Expected hash: "<<correctHash<<std::endl;
     }
 
     // Verify that we only generated captures

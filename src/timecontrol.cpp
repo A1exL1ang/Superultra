@@ -36,6 +36,7 @@ uint64 findOptimalTime(color_t col, uciParams uci){
 
 
 void timeMan::init(color_t col, uciParams uci){
+    forceStop = false;
     lastBestMove = nullOrNoMove;
     lastScore = noScore;
     stability = 0;
@@ -85,10 +86,14 @@ void timeMan::update(depth_t depthSearched, move_t bestMove, score_t score, doub
         optimalTime = averageTime * stabilityScale * scoreChangeScale * complexityScale;
 }
 
+timePoint_t timeMan::timeSpent(){
+    return getTime() - startTime;
+}
+
 bool timeMan::stopAfterSearch(){
-    return getTime() - startTime >= optimalTime;
+    return forceStop or timeSpent() >= optimalTime;
 }
 
 bool timeMan::stopDuringSearch(){
-    return getTime() - startTime >= maximumTime;
+    return forceStop or timeSpent() >= maximumTime;
 }

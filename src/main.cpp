@@ -51,11 +51,16 @@ int main(){
     initLMR();
     initTT();
 
+    // Default settings
+    globalTT.setSize(16);
+    threadCount = 1;
+
     // Recent loss: 0.004985
-    if (false){
+    if (true){
         doLoop();
         return 0;
     }
+
     // perftBoard.readFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     // std::cout<<perftBoard.eval()<<std::endl;
     // return 0;
@@ -71,32 +76,27 @@ int main(){
     4) HIstory pruning -- add !inCheck condition
     */
 
-    globalTT.setSize(16);
+    
 
     // testPerft();
 
       
     position board;
     board.readFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
-    board.getStackIndex();
-    // 3504426
-    // counter: 3064725
-    // probcut: 790735
-    // 2787455
 
     uciParams uci;
     uci.timeIncr[board.getTurn()] = 0;
     uci.movesToGo = 1;
-    uci.timeLeft[board.getTurn()] = 20000;
+    uci.timeLeft[board.getTurn()] = 2000;
 
     beginSearch(board, uci);
-    board.makeMove(stringToMove("e2a6"));
+    board.makeMove(stringToMove("e2e4"));
 
     uci.timeIncr[board.getTurn()] = 0;
     uci.movesToGo = 1;
-    uci.timeLeft[board.getTurn()] = 20000;
+    uci.timeLeft[board.getTurn()] = 10000;
 
-    searchDriver(uci, board);
+    beginSearch(board, uci);
 }
 /*
 .\cutechess-cli `

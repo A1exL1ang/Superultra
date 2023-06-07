@@ -175,9 +175,9 @@ void position::genPawnMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitb
     }
     
     // En passant (we can do a partial legality check which isnt costly as ep is pretty rare)
-    if (stk->epFile != noEP){
-        square_t epEnemyPawn = stk->epFile + (turn == white ? 32 : 24);
-        square_t epDestination = stk->epFile + (turn == white ? 40 : 16);
+    if (pos[stk].epFile != noEP){
+        square_t epEnemyPawn = pos[stk].epFile + (turn == white ? 32 : 24);
+        square_t epDestination = pos[stk].epFile + (turn == white ? 40 : 16);
         bitboard_t pawnCandidateEpStart = (pawnAttack(epDestination, !turn) & pieceBB[pawn][turn]);
 
         while (pawnCandidateEpStart){
@@ -290,12 +290,12 @@ void position::genKingMoves(bool noisy, bitboard_t attacked, moveList &moves){
         bitboard_t maskCastleMoves = 0;
 
         if (turn == white){
-            maskCastleMoves = (1ULL << g1) * ((stk->castleRights & castleWhiteK) and !(attacked & lineBB[e1][g1]) and !(allBB & lineBB[f1][g1]))
-                            | (1ULL << c1) * ((stk->castleRights & castleWhiteQ) and !(attacked & lineBB[e1][c1]) and !(allBB & lineBB[b1][d1]));
+            maskCastleMoves = (1ULL << g1) * ((pos[stk].castleRights & castleWhiteK) and !(attacked & lineBB[e1][g1]) and !(allBB & lineBB[f1][g1]))
+                            | (1ULL << c1) * ((pos[stk].castleRights & castleWhiteQ) and !(attacked & lineBB[e1][c1]) and !(allBB & lineBB[b1][d1]));
         }
         else{
-            maskCastleMoves = (1ULL << g8) * (turn == black and (stk->castleRights & castleBlackK) and !(attacked & lineBB[e8][g8]) and !(allBB & lineBB[f8][g8]))
-                            | (1ULL << c8) * (turn == black and (stk->castleRights & castleBlackQ) and !(attacked & lineBB[e8][c8]) and !(allBB & lineBB[b8][d8]));
+            maskCastleMoves = (1ULL << g8) * (turn == black and (pos[stk].castleRights & castleBlackK) and !(attacked & lineBB[e8][g8]) and !(allBB & lineBB[f8][g8]))
+                            | (1ULL << c8) * (turn == black and (pos[stk].castleRights & castleBlackQ) and !(attacked & lineBB[e8][c8]) and !(allBB & lineBB[b8][d8]));
         }
         while (maskCastleMoves){
             square_t en = poplsb(maskCastleMoves);

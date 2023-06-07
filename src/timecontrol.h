@@ -17,6 +17,7 @@ struct timer{
 };
 
 struct timeMan{
+    bool forceStop;
     timePoint_t startTime;
 
     timePoint_t averageTime;
@@ -29,6 +30,7 @@ struct timeMan{
 
     void init(color_t col, uciParams uci);
     void update(depth_t depthSearched, move_t bestMove, score_t score, double timeSpentOnNonBest);
+    timePoint_t timeSpent();
     bool stopAfterSearch();
     bool stopDuringSearch();
 };

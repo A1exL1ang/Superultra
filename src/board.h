@@ -38,7 +38,7 @@ public:
         return lsb(pieceBB[king][col]);
     }
     inline ttKey_t getHash(){
-        return stk->zhash;
+        return pos[stk].zhash;
     }
     inline bitboard_t allAttack(color_t col){
         bitboard_t attacked = 0;
@@ -106,8 +106,8 @@ public:
 private:
     // Position stack (UCI doesnt support undo so we dont either)
     // We store the bare minimum and reset the stack when necessary
-    boardState historyArray[maximumPly + 105];
-    boardState *stk = historyArray;
+    boardState pos[maximumPly + 105];
+    int stk;
 
     // Board variables
     piece_t board[64];

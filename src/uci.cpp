@@ -7,12 +7,12 @@
 #include "uci.h"
 #include "search.h"
 
-int threadCount = 1;
+int threadCount;
 static position board;
 
 void position::resetStack(){
-    historyArray[0] = *stk;
-    stk = historyArray;
+    pos[0] = pos[stk];
+    stk = 0;
 }
 
 void position::printBoard(){
@@ -95,16 +95,13 @@ void position::readFen(std::string fen){
     memset(colorBB, 0, sizeof(colorBB));
     allBB = 0;
 
-    stk = historyArray;
-    std::cout<<(stk - historyArray)<<std::endl;
-    getStackIndex();
-
-    stk->captPieceType = noPiece;
-    stk->castleRights = 0;
-    stk->epFile = noEP;
-    stk->halfMoveClock = 0;
-    stk->moveCount = 0;
-    stk->zhash = 0;
+    stk = 0;
+    pos[stk].captPieceType = noPiece;
+    pos[stk].castleRights = 0;
+    pos[stk].epFile = noEP;
+    pos[stk].halfMoveClock = 0;
+    pos[stk].moveCount = 0;
+    pos[stk].zhash = 0;
     
     // Step 3) Fill the board
     square_t sq = 56;
@@ -123,29 +120,25 @@ void position::readFen(std::string fen){
 
     // Step 5) Castling rights
     for (char c : castleStr){
-        if (c == 'K') stk->castleRights |= castleWhiteK;
-        if (c == 'Q') stk->castleRights |= castleWhiteQ;
-        if (c == 'k') stk->castleRights |= castleBlackK;
-        if (c == 'q') stk->castleRights |= castleBlackQ;
+        if (c == 'K') pos[stk].castleRights |= castleWhiteK;
+        if (c == 'Q') pos[stk].castleRights |= castleWhiteQ;
+        if (c == 'k') pos[stk].castleRights |= castleBlackK;
+        if (c == 'q') pos[stk].castleRights |= castleBlackQ;
     }
 
     // Step 4) En passant
     if (enpassTargetStr != "-") 
-        stk->epFile = (enpassTargetStr[0] - 'a');
+        pos[stk].epFile = (enpassTargetStr[0] - 'a');
 
     // Step 5) Half move and full move
-    stk->halfMoveClock = stoi(halfMoveClockStr);
-    stk->moveCount = (stoi(currentFullMoveStr) - 1) * 2 + turn;
+    pos[stk].halfMoveClock = stoi(halfMoveClockStr);
+    pos[stk].moveCount = (stoi(currentFullMoveStr) - 1) * 2 + turn;
 
     // Step 7) Fold everything into zhash
-    stk->zhash ^= ttRngCastle[stk->castleRights] ^ ttRngEnpass[stk->epFile] ^ (ttRngTurn * turn);
+    pos[stk].zhash ^= ttRngCastle[pos[stk].castleRights] ^ ttRngEnpass[pos[stk].epFile] ^ (ttRngTurn * turn);
     
     // Step 8) Refresh NNUE
-    stk->nnue.refresh(board, kingSq(white), kingSq(black));
-
-
-    std::cout<<(stk - historyArray)<<std::endl;
-    getStackIndex();
+    pos[stk].nnue.refresh(board, kingSq(white), kingSq(black));
 }
 
 std::string position::getFen(){
@@ -171,23 +164,23 @@ std::string position::getFen(){
 
     // Step 3) Castling rights
     fen += " ";
-    if (stk->castleRights & castleWhiteK) fen += "K";
-    if (stk->castleRights & castleWhiteQ) fen += "Q";
-    if (stk->castleRights & castleBlackK) fen += "k";
-    if (stk->castleRights & castleBlackQ) fen += 'q';
-    if (!stk->castleRights) fen += "-";
+    if (pos[stk].castleRights & castleWhiteK) fen += "K";
+    if (pos[stk].castleRights & castleWhiteQ) fen += "Q";
+    if (pos[stk].castleRights & castleBlackK) fen += "k";
+    if (pos[stk].castleRights & castleBlackQ) fen += 'q';
+    if (!pos[stk].castleRights) fen += "-";
 
     // Step 4: En passant
     fen += " ";
-    if (stk->epFile != noEP){
-        fen += (stk->epFile + 'a');
+    if (pos[stk].epFile != noEP){
+        fen += (pos[stk].epFile + 'a');
         fen += std::to_string(turn == white ? 6 : 3);
     }
     else fen += "-";
 
     // Step 5) Half move and full move
-    fen += " " + std::to_string(stk->halfMoveClock);
-    fen += " " + std::to_string(stk->moveCount / 2 + 1);
+    fen += " " + std::to_string(pos[stk].halfMoveClock);
+    fen += " " + std::to_string(pos[stk].moveCount / 2 + 1);
     
     return fen;
 }
@@ -243,11 +236,11 @@ std::string position::flippedFen(){
     return newFen;
 }
 
-
 void printInfo(){
     std::cout<<"id name Superultra"<<std::endl;
     std::cout<<"id author Alex Liang"<<std::endl;
     std::cout<<"option name Hash type spin default 16 min 1 max 2048"<<std::endl;
+    std::cout<<"option name Threads type spin default 1 min 1 max 512"<<std::endl;
     std::cout<<"uciok"<<std::endl;
 }
 
@@ -301,7 +294,7 @@ void proccessGo(std::istringstream &iss){
     }
     
     // Perform the search
-    searchDriver(uci, board);
+    beginSearch(board, uci);
 }
 
 void setOption(std::istringstream &iss){
@@ -318,6 +311,11 @@ void setOption(std::istringstream &iss){
     if (optionName == "Hash"){
         iss >> token;
         globalTT.setSize(stoi(token));
+    }
+
+    if (optionName == "Threads"){
+        iss >> token;
+        threadCount = stoi(token);
     }
 }
 

@@ -29,5 +29,5 @@ char pieceToChar(piece_t p);
 piece_t charToPiece(char c);
 void printMask(bitboard_t msk);
 
-// Main loop
+// Helpers
 void doLoop();

@@ -8,18 +8,18 @@ bool position::drawByRepetition(depth_t searchPly){
     // b) Threefold rep if matching ancestors are not in the search
     
     int8 counter = 0;
-    boardState *curPos = stk;
+    int curPos = stk;
 
-    for (int i = 2; i <= stk->halfMoveClock; i += 2){
+    for (int i = 2; i <= pos[stk].halfMoveClock; i += 2){
         // If we are at [0] or [1] then break
-        if (curPos == historyArray or (curPos - 1) == historyArray)
+        if (curPos <= 1)
             break;
         
         // Decrement
         curPos -= 2;
 
         // Repetition check
-        if (stk->zhash == curPos->zhash)
+        if (pos[stk].zhash == pos[curPos].zhash)
             if (i <= searchPly or ++counter == 2)
                 return true;
     }
@@ -28,7 +28,7 @@ bool position::drawByRepetition(depth_t searchPly){
 
 bool position::drawByFiftyMoveRule(){
     // Note that checkmate has a higher priority. TBH it doesn't make much of a difference...
-    return stk->halfMoveClock >= 100;
+    return pos[stk].halfMoveClock >= 100;
 }
 
 bool position::drawByInsufficientMaterial(){
@@ -41,5 +41,5 @@ bool position::drawByInsufficientMaterial(){
 }
 
 score_t position::eval(){
-    return stk->nnue.eval(turn);
+    return pos[stk].nnue.eval(turn);
 }
