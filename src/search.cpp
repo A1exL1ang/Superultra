@@ -761,7 +761,7 @@ void iterativeDeepening(position board, searchData &sd, uciParams uci){
             // Print and update best move and timeman if we are in main thread
             if (sd.threadId == 0){
                 printSearchResults(sd.result);
-                tm.update(startingDepth, bestMove, score, 1.0 - (static_cast<double>(sd.moveNodeStat[moveFrom(bestMove)][moveTo(bestMove)]) / static_cast<double>(sd.nodes)));
+                tm.update(startingDepth, bestMove, score, 1.0 - (static_cast<double>(sd.moveNodeStat[moveFrom(bestMove)][moveTo(bestMove)]) / (sd.nodes)));
             }                
             // See if we should continue to next depth
             if (tm.stopAfterSearch())
@@ -788,4 +788,58 @@ void beginSearch(position board, uciParams uci){
     
     selectBestThread();
     globalTT.incrementAge();
+}
+
+
+
+void searchDriver(position boardToSearch, uciParams uci){
+
+    move_t bestMove = 0;
+    score_t score = 0;
+
+    position board = boardToSearch;
+    searchData sd = {};
+
+    tm.init(board.getTurn(), uci);
+
+    for (depth_t startingDepth = 1; startingDepth <= maximumPly; startingDepth++){
+
+        // Search
+        sd.selDepth = 0;
+
+
+        score = aspirationWindowSearch(score, startingDepth, board, sd);
+        
+        if (!sd.stopped){
+            bestMove = sd.pvTable[0][0];
+
+            std::cout<<"info depth "<<int(startingDepth);
+            std::cout<<" seldepth "<<int(sd.selDepth);
+            
+            if (abs(score) >= foundMate)
+                std::cout<<" score mate "<<(checkMateScore - abs(score) + 1) * (score > 0 ? 1 : -1) / 2;
+            else 
+                std::cout<<" score cp " <<score;
+            
+            std::cout<<" nodes "    <<sd.nodes;
+            std::cout<<" time "<<tm.timeSpent();
+            std::cout<<" nps "      <<int(sd.nodes / (tm.timeSpent() / 1000.0 + 0.00001));
+            std::cout<<" hashfull "<<globalTT.hashFullness();
+            std::cout<<" pv ";
+
+            for (depth_t i = 0; i < sd.pvLength[0]; i++) 
+                std::cout<<moveToString(sd.pvTable[0][i])<<" ";
+
+            std::cout<<std::endl;
+
+            // Update time
+
+            tm.update(startingDepth, bestMove, score, 1.0 - (static_cast<double>(sd.moveNodeStat[moveFrom(bestMove)][moveTo(bestMove)]) / static_cast<double>(sd.nodes)));
+            
+            if (tm.stopAfterSearch())
+                break;
+        }
+    }
+    globalTT.incrementAge();
+    std::cout<<"bestmove "<<moveToString(bestMove)<<std::endl;
 }

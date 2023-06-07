@@ -294,7 +294,7 @@ void proccessGo(std::istringstream &iss){
     }
     
     // Perform the search
-    beginSearch(board, uci);
+    searchDriver(board, uci);
 }
 
 void setOption(std::istringstream &iss){

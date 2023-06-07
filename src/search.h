@@ -45,3 +45,4 @@ struct searchData{
 
 void initLMR();
 void beginSearch(position board, uciParams uci);
+void searchDriver(position boardToSearch, uciParams uci);
