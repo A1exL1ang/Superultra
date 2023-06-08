@@ -376,7 +376,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
 
         bool ttSoundCapt = (foundEntry and tte.depth > 0 and board.moveCaptType(tte.bestMove) != noPiece);
         bool isQuiet = movePromo(move) == noPiece and board.moveCaptType(move) == noPiece;
-        bool killerOrCounter = (move == sd.killers[ply][0] or move == sd.killers[ply][1] or (ply >= 1 and move == *((ss - 1)->counter)));
+        bool killerOrCounter = (move == sd.killers[ply][0] or move == sd.killers[ply][1] or (ply >= 1 and (ss - 1)->move != nullOrNoMove and move == *((ss - 1)->counter)));
 
         movesSeen++;
 
@@ -688,7 +688,7 @@ void printSearchResults(searchResultData result){
     // Now print out all info
     std::cout<<"info depth "<<int(result.depthSearched);
     std::cout<<" seldepth "<<int(result.selDepth);
-            
+    
     if (abs(result.score) >= foundMate)
         std::cout<<" score mate "<<(checkMateScore - abs(result.score) + 1) * (result.score > 0 ? 1 : -1) / 2;
     else 
@@ -702,7 +702,7 @@ void printSearchResults(searchResultData result){
 
     for (std::string mv : result.pvMoves)
         std::cout<<mv<<" ";
-
+    
     std::cout<<std::endl;
 }
 
@@ -739,8 +739,7 @@ void selectBestThread(){
     std::cout<<"bestmove "<<bestResult.pvMoves[0]<<std::endl;
 }
 
-void iterativeDeepening(position board, searchData &sd, uciParams uci){
-    move_t bestMove = nullOrNoMove;
+void iterativeDeepening(position board, searchData &sd){
     score_t score = noScore;
 
     for (depth_t startingDepth = 1; startingDepth <= maximumPly; startingDepth++){
@@ -761,36 +760,47 @@ void iterativeDeepening(position board, searchData &sd, uciParams uci){
             // Print and update best move and timeman if we are in main thread
             if (sd.threadId == 0){
                 printSearchResults(sd.result);
-                tm.update(startingDepth, bestMove, score, 1.0 - (static_cast<double>(sd.moveNodeStat[moveFrom(bestMove)][moveTo(bestMove)]) / (sd.nodes)));
+
+                move_t bestMove = sd.pvTable[0][0];
+                tm.update(startingDepth, bestMove, score, 1.0 - (static_cast<double>(sd.moveNodeStat[moveFrom(bestMove)][moveTo(bestMove)]) / (sd.nodes + 1.0)));
+
+                // See if we should continue to next depth
+                if (tm.stopAfterSearch())
+                    break;
             }                
-            // See if we should continue to next depth
-            if (tm.stopAfterSearch())
-                break;
         }
+        else 
+            break;
     }
-    // If our main thread is done, stop all other threads
-    if (sd.threadId == 0)
-        tm.forceStop = true;
 }
 
 void beginSearch(position board, uciParams uci){
+    // Init
     tm.init(board.getTurn(), uci);
     threadSD.assign(threadCount, {});
 
+    // Launch threadCount-1 helper threads (start our indexing from 1)
     std::thread threads[threadCount];
 
-    for (int i = 0; i < threadCount; i++){
+    for (int i = 1; i < threadCount; i++){
         threadSD[i].threadId = i;
-        threads[i] = std::thread(iterativeDeepening, board, std::ref(threadSD[i]), uci);
+        threads[i] = std::thread(iterativeDeepening, board, std::ref(threadSD[i]));
     }
-    for (int i = 0; i < threadCount; i++)
+
+    // Launch main thread
+    threadSD[0].threadId = 0;
+    iterativeDeepening(board, threadSD[0]);
+    
+    // Once our main thread is done, stop and join helper threads
+    tm.forceStop = true;
+
+    for (int i = 1; i < threadCount; i++)
         threads[i].join();
     
+    // Report and update
     selectBestThread();
     globalTT.incrementAge();
 }
-
-
 
 void searchDriver(position boardToSearch, uciParams uci){
 

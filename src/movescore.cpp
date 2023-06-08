@@ -58,7 +58,7 @@ void updateAllHistory(move_t bestMove, moveList &quiets, depth_t depth, depth_t 
         sd.killers[ply][0] = bestMove;
     }
     // Set counter
-    if (ply >= 1)
+    if (ply >= 1 and (ss - 1)->move != nullOrNoMove)
         *(ss - 1)->counter = bestMove;
 
     // Update history values by penalizing failing moves and incrementing best move

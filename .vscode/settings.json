@@ -1,7 +1,5 @@
 {
     "files.associations": {
-        "ostream": "cpp",
-        "iostream": "cpp",
         "array": "cpp",
         "atomic": "cpp",
         "bit": "cpp",
@@ -43,16 +41,18 @@
         "initializer_list": "cpp",
         "iomanip": "cpp",
         "iosfwd": "cpp",
+        "iostream": "cpp",
         "istream": "cpp",
         "limits": "cpp",
         "new": "cpp",
         "numbers": "cpp",
+        "ostream": "cpp",
+        "semaphore": "cpp",
         "sstream": "cpp",
         "stdexcept": "cpp",
-        "streambuf": "cpp",
-        "typeinfo": "cpp",
-        "semaphore": "cpp",
         "stop_token": "cpp",
-        "thread": "cpp"
+        "streambuf": "cpp",
+        "thread": "cpp",
+        "typeinfo": "cpp"
     }
 }
