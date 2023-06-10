@@ -68,6 +68,7 @@ struct ttStruct{
 
     void addToTT(ttKey_t zhash, score_t score, score_t staticEval, move_t bestMove, depth_t depth, depth_t ply, ttFlagAge_t bound, bool pvNode);
     void incrementAge();
+    void prefetch(ttKey_t zhash);
     int hashFullness();
 };
 

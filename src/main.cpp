@@ -18,10 +18,18 @@
 position perftBoard;
 uint64 totalTime, nodes;
 
+timePoint_t getTimeNS(){
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+uint64 sum = 0;
 
 uint64 perft(depth_t depth, depth_t depthLim){
     moveList moves;
     perftBoard.genAllMoves(false, moves);
+
+    sum += perftBoard.eval();
+    
 
     // Return number of leaves without directly exploring them
     if (depth + 1 >= depthLim)
@@ -31,10 +39,9 @@ uint64 perft(depth_t depth, depth_t depthLim){
     for (int i = 0; i < moves.sz; i++){
         move_t move = moves.moves[i].move;
 
-        uint64 st = getTime();
+        
         perftBoard.makeMove(move);
-        totalTime += getTime() - st;
-        nodes++;
+        
 
         uint64 value = perft(depth + 1, depthLim);
         leaves += value;
@@ -97,12 +104,14 @@ void selectFromPGN(){
 
                 // We found a move
                 if (!inComment and isalpha(S[i])){
+
+
                     uciParams uci;
                     uci.timeIncr[board.getTurn()] = 0;
                     uci.movesToGo = 1;
-                    uci.timeLeft[board.getTurn()] = 333;
+                    uci.timeLeft[board.getTurn()] = 280;
 
-                    if (board.getTurn() == white)
+                    if (board.getTurn() == black)
                         beginSearch(board, uci);
 
                     // Generate all moves 
@@ -211,23 +220,28 @@ int main(){
     threadCount = 1;
 
     // Recent loss: 0.004985
-    if (false){
+    if (true){
         doLoop();
         return 0;
     }
 
-    
-    threadCount = 2;
-    selectFromPGN();
-    return 0;
+
+
+    // threadCount = 4;
+    // selectFromPGN();
+    // return 0;
+
     
 
-    // perftBoard.readFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-    // std::cout<<perftBoard.eval()<<std::endl;
-    // return 0;
-    // perft(0, 5);
-    // std::cout<<std::setprecision(15)<<totalTime / (nodes + 0.0)<<std::endl;
-    // return 0;
+    
+    /*
+    perftBoard.readFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    std::cout<<perftBoard.eval()<<std::endl;
+    perft(0, 6);
+    std::cout<<std::setprecision(15)<<totalTime / (nodes + 0.0)<<std::endl;
+    std::cout<<sum<<std::endl;
+    return 0;
+    */
 
     /*
     CHANGES:
@@ -238,9 +252,9 @@ int main(){
     */
 
     // TODO: 
-    // TT Prefetch
-    // Allocate less time for timeman
     // SIMD
+    // Fix bad draw detection
+    // Bad capture 1, bad capture 2
     // EGTB
     // Thinking on opponent time
     // Other UCI stuffs
@@ -287,9 +301,8 @@ int main(){
         return 0;
     }
     */
-
-
-    board.readFen("1r6/7k/5P2/2R4B/6KP/6P1/8/8 w - - 3 80");
+    // info depth 18 seldepth 31 score cp 39 nodes 1781651 time 700 nps 2545179 hashfull 369 pv e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4 f8c5 d4c6 b7c6 f1d3 d7d6 e1g1 g8e7 b1d2 e8g8 f1e1 e7g6 d2f3 f8e8 
+    board.readFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     uciParams uci;
     uci.timeIncr[board.getTurn()] = 0;
@@ -310,8 +323,8 @@ int main(){
 }
 /*
 .\cutechess-cli `
--engine conf="E82_Debug6" `
--engine conf="E67_AWupdate" `
+-engine conf="E88_SIMD2" `
+-engine conf="E85_Razoring" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
 -pgnout "C:\Program Files\Cute Chess\Games\Games1.txt.txt" `
@@ -319,150 +332,21 @@ int main(){
 -rounds 25000 `
 -repeat 2 `
 -recover `
--concurrency 5 `
+-concurrency 8 `
+-sprt elo0=0 elo1=5 alpha=0.05 beta=0.05 `
 -ratinginterval 10
 */
 
 /*
--sprt elo0=0 elo1=5 alpha=0.05 beta=0.05 `
-*/
+    for (int i = 0; i < hiddenHalf; i += 16){
+        // Load 16 elements
+        __m256i vectorAccum = _mm256_load_si256(reinterpret_cast<__m256i*>(&accum[botIdx + i]));
+        __m256i vectorW2 = _mm256_load_si256(reinterpret_cast<__m256i*>(&W2[hiddenHalf + i]));
 
-/*
-[Event "My Tournament"]
-[Site "?"]
-[Date "2023.06.07"]
-[Round "56"]
-[White "Ethereal-avx"]
-[Black "E80_Debug4"]
-[Result "1-0"]
-[ECO "C63"]
-[GameDuration "00:00:33"]
-[GameEndTime "2023-06-07T17:40:09.436 Pacific Daylight Time"]
-[GameStartTime "2023-06-07T17:39:35.947 Pacific Daylight Time"]
-[Opening "Ruy Lopez"]
-[PlyCount "151"]
-[Termination "abandoned"]
-[TimeControl "40/6+0.06"]
-[Variation "Schliemann defense"]
+        // Clamp
+        vectorAccum = _mm256_max_epi16(vectorAccum, vectorCreluMin);
+        vectorAccum = _mm256_min_epi16(vectorAccum, vectorCreluMax);
 
-1. e4 {book} e5 {book} 2. Nf3 {book} Nc6 {book} 3. Bb5 {book} f5 {book}
-4. Bxc6 {book} dxc6 {book} 5. Nc3 {+0.42/18 0.62s} fxe4 {-0.03/16 0.33s}
-6. Nxe4 {+0.10/17 0.17s} Nf6 {-0.21/15 0.14s} 7. Qe2 {+0.12/19 0.41s}
-Bg4 {-0.17/15 0.28s} 8. d3 {+0.10/17 0.23s} Bb4+ {-0.05/16 0.30s}
-9. Bd2 {+0.35/17 0.16s} Bxf3 {-0.08/15 0.16s} 10. Qxf3 {+0.44/17 0.27s}
-Bxd2+ {-0.06/15 0.13s} 11. Nxd2 {+0.41/17 0.17s} Qd4 {-0.16/16 0.23s}
-12. O-O-O {+0.60/18 0.28s} O-O {+0.25/14 0.16s} 13. Rhf1 {+0.50/17 0.17s}
-Qd5 {-0.11/15 0.37s} 14. a3 {+0.70/18 0.33s} Rae8 {-0.29/15 0.54s}
-15. Qg3 {+0.60/17 0.31s} a5 {-0.10/17 0.32s} 16. f3 {+0.78/19 0.96s}
-b5 {-0.08/14 0.25s} 17. Kb1 {+0.62/18 0.21s} Nh5 {-0.30/14 0.38s}
-18. Qf2 {+0.67/17 0.20s} Nf4 {-0.53/14 0.21s} 19. Rfe1 {+0.67/18 0.27s}
-Qd6 {-0.62/14 0.28s} 20. Re4 {+1.16/16 0.20s} Nd5 {-0.79/15 0.39s}
-21. Rde1 {+0.94/17 0.24s} a4 {-0.70/15 0.21s} 22. Rg4 {+0.88/17 0.11s}
-Nf6 {-0.45/15 0.46s} 23. Rh4 {+0.98/19 0.30s} Nd7 {-0.75/14 0.24s}
-24. Qg3 {+1.23/18 0.49s} c5 {-0.85/13 0.23s} 25. Ne4 {+1.38/18 0.33s}
-Qe7 {-0.79/12 0.12s} 26. Qg5 {+0.92/17 0.28s} Qe6 {-0.69/14 0.28s}
-27. Rg4 {+1.18/16 0.22s} Rf7 {-0.54/13 0.21s} 28. Qe3 {+1.18/15 0.14s}
-Qb6 {-0.50/14 0.20s} 29. c3 {+0.88/14 0.12s} h6 {-0.18/14 0.21s}
-30. h4 {+1.00/13 0.048s} Re6 {0.00/13 0.11s} 31. Qd2 {+0.69/15 0.074s}
-Rc6 {-0.02/13 0.13s} 32. Rh1 {+0.82/15 0.059s} Qb7 {-0.10/14 0.21s}
-33. h5 {+0.84/13 0.057s} Qa6 {0.00/14 0.12s} 34. Rd1 {+0.91/15 0.061s}
-Qb6 {0.00/15 0.26s} 35. Qe1 {+0.87/14 0.055s} Nf8 {-0.11/14 0.30s}
-36. Ng3 {+0.73/15 0.057s} Nd7 {-0.15/13 0.064s} 37. Ne4 {+0.92/17 0.073s}
-Nf8 {0.00/12 0.12s} 38. Qd2 {+0.99/14 0.062s} Nd7 {-0.21/11 0.073s}
-39. Qf2 {+0.85/14 0.050s} Re6 {0.00/11 0.061s} 40. Qh4 {+0.85/14 0.060s}
-Kh7 {0.00/13 0.060s} 41. Qf2 {+0.77/18 0.71s} Kg8 {-0.20/14 0.29s}
-42. Rd2 {+0.73/18 0.47s} Kh7 {-0.26/14 0.22s} 43. Qe1 {+0.92/18 0.40s}
-Qa6 {-0.26/15 0.38s} 44. Rc2 {+0.92/19 0.44s} Rf8 {-0.13/15 0.47s}
-45. d4 {+1.85/18 0.61s} exd4 {-0.51/12 0.10s} 46. cxd4 {+1.26/18 0.19s}
-Kh8 {-0.66/14 0.36s} 47. d5 {+1.53/17 0.40s} Re5 {-0.64/14 0.10s}
-48. Qd1 {+0.62/18 0.56s} Qa7 {0.00/14 0.15s} 49. Rg6 {+1.10/18 0.51s}
-b4 {+0.16/15 0.14s} 50. Re6 {+1.17/16 0.13s} bxa3 {+0.19/16 0.22s}
-51. Nxc5 {+0.01/20 0.28s} Rxe6 {-0.26/16 0.16s} 52. dxe6 {+0.01/21 0.32s}
-Nxc5 {-0.31/18 0.13s} 53. e7 {+0.31/21 0.13s} Re8 {-0.65/19 0.24s}
-54. Qd8 {+0.14/20 0.11s} Qb8 {-0.47/20 0.18s} 55. Qxb8 {+0.37/22 0.19s}
-Rxb8 {-0.63/18 0.11s} 56. Rxc5 {+0.35/22 0.16s} Rxb2+ {-0.71/20 0.37s}
-57. Ka1 {+0.17/21 0.10s} Re2 {-0.60/18 0.12s} 58. Rxc7 {+0.15/24 0.21s}
-Kg8 {-0.64/18 0.14s} 59. f4 {+0.11/22 0.17s} Kf7 {-0.39/18 0.11s}
-60. e8=Q+ {+0.01/20 0.12s} Kxe8 {-0.63/19 0.14s} 61. Rxg7 {-0.01/20 0.12s}
-Rf2 {-0.24/18 0.13s} 62. g3 {+0.01/21 0.095s} Kf8 {-0.34/20 0.19s}
-63. Rg6 {+0.02/19 0.11s} Rf3 {-0.22/19 0.40s} 64. Kb1 {+0.01/19 0.13s}
-a2+ {-0.33/18 0.16s} 65. Kxa2 {+0.17/18 0.30s} Kf7 {-0.16/19 0.50s}
-66. Ka1 {+0.28/20 0.16s} a3 {-0.19/16 0.15s} 67. Ka2 {+0.01/19 0.18s}
-Ke7 {-0.15/16 0.12s} 68. Rxh6 {+0.08/17 0.20s} Rxg3 {-0.15/14 0.10s}
-69. Rb6 {+0.01/20 0.12s} Rf3 {-0.03/15 0.18s} 70. h6 {+0.01/18 0.11s}
-Rxf4 {-0.05/15 0.21s} 71. Rb8 {+0.01/18 0.10s} Rf8 {0.00/16 0.14s}
-72. Rb7+ {+0.01/20 0.060s} Kf6 {0.00/16 0.10s} 73. h7 {+0.01/21 0.053s}
-Kg6 {0.00/20 0.14s} 74. Kxa3 {+0.01/22 0.074s} Rh8 {0.00/24 0.23s}
-75. Kb4 {+0.01/20 0.059s} Rxh7 {0.00/33 0.74s}
-76. Rxh7 {+0.01/34 0.055s, Black disconnects} 1-0
-*/
-
-/*
-Score of E73_LazySMP2 vs E67_AWupdate: 297 - 197 - 590  [0.546] 1084
-...      E73_LazySMP2 playing White: 192 - 60 - 290  [0.622] 542
-...      E73_LazySMP2 playing Black: 105 - 137 - 300  [0.470] 542
-...      White vs Black: 329 - 165 - 590  [0.576] 1084
-Elo difference: 32.1 +/- 13.9, LOS: 100.0 %, DrawRatio: 54.4 %
-SPRT: llr 2.96 (100.4%), lbound -2.94, ubound 2.94 - H1 was accepted
-
-Player: E73_LazySMP2
-   "Draw by 3-fold repetition": 429
-   "Draw by fifty moves rule": 72
-   "Draw by insufficient mating material": 85
-   "Draw by stalemate": 4
-   "Loss: Black disconnects": 34
-   "Loss: Black mates": 32
-   "Loss: White disconnects": 28
-   "Loss: White mates": 103
-   "No result": 4
-   "Win: Black disconnects": 1
-   "Win: Black mates": 105
-   "Win: White mates": 191
-Player: E67_AWupdate
-   "Draw by 3-fold repetition": 429
-   "Draw by fifty moves rule": 72
-   "Draw by insufficient mating material": 85
-   "Draw by stalemate": 4
-   "Loss: Black disconnects": 1
-   "Loss: Black mates": 105
-   "Loss: White mates": 191
-   "No result": 4
-   "Win: Black disconnects": 34
-   "Win: Black mates": 32
-   "Win: White disconnects": 28
-   "Win: White mates": 103
-Finished match
-*/
-
-
-/*
-Score of E81_Debug5 vs E67_AWupdate: 3040 - 3194 - 11355  [0.496] 17589
-...      E81_Debug5 playing White: 1970 - 1099 - 5725  [0.550] 8794
-...      E81_Debug5 playing Black: 1070 - 2095 - 5630  [0.442] 8795
-...      White vs Black: 4065 - 2169 - 11355  [0.554] 17589
-Elo difference: -3.0 +/- 3.1, LOS: 2.6 %, DrawRatio: 64.6 %
-
-Player: E81_Debug5
-   "Draw by 3-fold repetition": 7930
-   "Draw by fifty moves rule": 1345
-   "Draw by insufficient mating material": 2050
-   "Draw by stalemate": 30
-   "Loss: Black mates": 1099
-   "Loss: White mates": 2095
-   "No result": 8
-   "Win: Black disconnects": 2
-   "Win: Black mates": 1070
-   "Win: White mates": 1968
-Player: E67_AWupdate
-   "Draw by 3-fold repetition": 7930
-   "Draw by fifty moves rule": 1345
-   "Draw by insufficient mating material": 2050
-   "Draw by stalemate": 30
-   "Loss: Black disconnects": 2
-   "Loss: Black mates": 1070
-   "Loss: White mates": 1968
-   "No result": 8
-   "Win: Black mates": 1099
-   "Win: White mates": 2095
-Finished match
+        vectorEval = _mm256_add_epi32(vectorEval, _mm256_madd_epi16(vectorAccum, vectorW2));
+    }
 */

@@ -8,7 +8,7 @@
 
 const static timePoint_t moveLag = 30;
 
-uint64 timer::getTime(){
+timePoint_t timer::getTime(){
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 

@@ -12,7 +12,9 @@ void position::addPiece(piece_t pieceType, square_t sq, color_t col, bool update
     allBB ^= (1ULL << sq);
     board[sq] = encodePiece(pieceType, col);
     pos[stk].zhash ^= ttRngPiece[pieceType][col][sq];
-    if (updateAccum) pos[stk].nnue.addFeature(pieceType, sq, col, kingSq(white), kingSq(black));
+
+    if (updateAccum) 
+        pos[stk].nnue.addFeature(pieceType, sq, col, kingSq(white), kingSq(black));
 }
 
 void position::removePiece(square_t sq, bool updateAccum){
@@ -26,7 +28,9 @@ void position::removePiece(square_t sq, bool updateAccum){
     allBB ^= (1ULL << sq);
     board[sq] = 0;
     pos[stk].zhash ^= ttRngPiece[pieceType][col][sq];
-    if (updateAccum) pos[stk].nnue.removeFeature(pieceType, sq, col, kingSq(white), kingSq(black));
+
+    if (updateAccum) 
+        pos[stk].nnue.removeFeature(pieceType, sq, col, kingSq(white), kingSq(black));
 }
 
 void position::movePiece(piece_t piece, square_t st, square_t en, color_t col, bool updateAccum){
@@ -38,7 +42,9 @@ void position::movePiece(piece_t piece, square_t st, square_t en, color_t col, b
     board[st] = noPiece;
     board[en] = encodePiece(piece, col);
     pos[stk].zhash ^= ttRngPiece[piece][col][st] ^ ttRngPiece[piece][col][en];
-    if (updateAccum) pos[stk].nnue.updateMove(piece, st, en, col, kingSq(white), kingSq(black));
+    
+    if (updateAccum) 
+        pos[stk].nnue.updateMove(piece, st, en, col, kingSq(white), kingSq(black));
 }
 
 void position::makeMove(move_t move){
@@ -117,9 +123,9 @@ void position::makeMove(move_t move){
     
     // Step 8d) Castle rights if we altered any rook positions through moving or capturing 
     pos[stk].castleRights &= ((st != h1 and en != h1) * castleWhiteK)
-                       | ((st != a1 and en != a1) * castleWhiteQ)
-                       | ((st != h8 and en != h8) * castleBlackK)
-                       | ((st != a8 and en != a8) * castleBlackQ);
+                           | ((st != a1 and en != a1) * castleWhiteQ)
+                           | ((st != h8 and en != h8) * castleBlackK)
+                           | ((st != a8 and en != a8) * castleBlackQ);
 
     // Step 8e) Flip color
     turn ^= 1;

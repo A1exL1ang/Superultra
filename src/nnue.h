@@ -17,8 +17,8 @@ const int evalScale = 400;
 const int Q1 = 255;
 const int Q2 = 64;
 
-const nnueWeight_t creluMin = 0;
-const nnueWeight_t creluMax = Q1;
+const nnueWeight_t creluL = 0;
+const nnueWeight_t creluR = Q1;
 
 const int kingBucketId[64] = {
     0, 0, 1, 1, 2, 2, 3, 3,
@@ -32,7 +32,7 @@ const int kingBucketId[64] = {
 };
 
 struct neuralNetwork{    
-    std::array<nnueWeight_t, hiddenHalf * 2> accum;
+    alignas(32) std::array<nnueWeight_t, hiddenHalf * 2> accum;
 
     void addFeature(piece_t pieceType, square_t sq, color_t col, square_t wking, square_t bking);
     void removeFeature(piece_t pieceType, square_t sq, color_t col, square_t wking, square_t bking);

@@ -307,12 +307,13 @@ void setOption(std::istringstream &iss){
         optionName += (optionName.empty() ? "" : " ") + token;
     }
 
-    // New hash size
+    // TT table size
     if (optionName == "Hash"){
         iss >> token;
         globalTT.setSize(stoi(token));
     }
 
+    // Thread couunt
     if (optionName == "Threads"){
         iss >> token;
         threadCount = stoi(token);

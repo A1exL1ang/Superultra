@@ -111,6 +111,10 @@ void ttStruct::incrementAge(){
     currentAge = ((currentAge + 1) & ageCycle);
 }
 
+void ttStruct::prefetch(ttKey_t zhash){
+    __builtin_prefetch(&table[zhash & maskMod]);
+}
+
 int ttStruct::hashFullness(){
     int counter = 0;
     for (int i = 0; i < 1000 / clusterSize; i++)

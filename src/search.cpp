@@ -126,6 +126,7 @@ template<bool pvNode> static score_t qsearch(score_t alpha, score_t beta, depth_
         sd.nodes++;
 
         board.makeMove(move);
+        globalTT.prefetch(board.getHash());
 
         // Recurse
         score_t score = -qsearch<pvNode>(-beta, -alpha, ply + 1, board, sd, ss + 1);
@@ -259,6 +260,19 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         return ss->staticEval;
     }
 
+    // TT based razoring (~4 elo)
+
+    if (!pvNode 
+        and !inCheck 
+        and ss->excludedMove == nullOrNoMove
+        and depth <= 2
+        and foundEntry 
+        and (decodeBound(tte.ageAndBound) == boundUpper or decodeBound(tte.ageAndBound) == boundExact) 
+        and tte.score + 180 * depth * depth <= alpha)
+    {
+        return tte.score;
+    }
+
     // 7) Null Move Pruning (~60 elo)
     // We evaluate the position if we skipped our turn. 
     // We then check if doing so causes a beta cutoff so we use zero window [beta - 1, beta].
@@ -276,6 +290,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         sd.nodes++;
 
         board.makeNullMove();
+        globalTT.prefetch(board.getHash());
         
         depth_t R = 3 + (depth / 3) + std::min((ss->staticEval - beta) / 200, 3);
         
@@ -334,6 +349,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
             sd.nodes++;
 
             board.makeMove(move);
+            globalTT.prefetch(board.getHash());
 
             // Verify with QS
             score_t score = -qsearch<false>(-probCutBeta, -(probCutBeta - 1), ply + 1, board, sd, ss + 1);
@@ -496,6 +512,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         sd.nodes++;
 
         board.makeMove(move);
+        globalTT.prefetch(board.getHash());
 
         // Step 16) Late Move Reduction (~175 elo)
         // Later moves are likely to fail low so we search them at a reduced depth
