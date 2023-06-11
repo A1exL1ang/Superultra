@@ -8,7 +8,7 @@
 #pragma once
 
 struct boardState{
-    piece_t captPieceType;
+    piece_t prevMoveCaptPieceType;
     move_t prevMove;
 
     int8 castleRights; 
@@ -24,7 +24,31 @@ struct boardState{
 class position{
 
 public:
-    // Utility
+    // Move gen
+    void genAllMoves(bool noisy, moveList &moves);
+
+    // Move make/unmake
+    void makeMove(move_t move);
+    void undoLastMove();
+    void makeNullMove();
+    void undoNullMove();
+    
+    // Eval related
+    bool seeGreater(move_t move, score_t value);
+    bool drawByRepetition(depth_t searchPly);
+    bool drawByInsufficientMaterial();
+    bool drawByFiftyMoveRule();
+    score_t eval();
+
+    // Fen and debug related
+    void readFen(std::string fen);
+    std::string getFen();
+    std::string flippedFen();
+    void resetStack();
+    void printBoard();
+    void verifyConsistency();
+
+    // Interface and utility access
     inline color_t getTurn(){
         return turn;
     }
@@ -78,30 +102,6 @@ public:
     inline bool hasMajorPieceLeft(color_t col){
         return (pieceBB[knight][col] | pieceBB[bishop][col] | pieceBB[rook][col] | pieceBB[queen][col]);
     }
-
-    // Move gen
-    void genAllMoves(bool noisy, moveList &moves);
-
-    // Move make/unmake
-    void makeMove(move_t move);
-    void undoLastMove();
-    void makeNullMove();
-    void undoNullMove();
-    
-    // Eval related
-    bool seeGreater(move_t move, score_t value);
-    bool drawByRepetition(depth_t searchPly);
-    bool drawByInsufficientMaterial();
-    bool drawByFiftyMoveRule();
-    score_t eval();
-
-    // Fen and debug related
-    void readFen(std::string fen);
-    std::string getFen();
-    std::string flippedFen();
-    void resetStack();
-    void printBoard();
-    void verifyConsistency();
 
 private:
     // Position stack (UCI doesnt support undo so we dont either)

@@ -96,7 +96,7 @@ void position::readFen(std::string fen){
     allBB = 0;
 
     stk = 0;
-    pos[stk].captPieceType = noPiece;
+    pos[stk].prevMoveCaptPieceType = noPiece;
     pos[stk].castleRights = 0;
     pos[stk].epFile = noEP;
     pos[stk].halfMoveClock = 0;
@@ -300,19 +300,19 @@ void proccessGo(std::istringstream &iss){
 void setOption(std::istringstream &iss){
     // setoption name option [value ...]
     std::string token, optionName;
-    iss >> token; // Read the "name" token
+
+    // Read the "name" token
+    iss >> token; 
 
     // Read the full name of the option
     while ((iss >> token) and token != "value"){
         optionName += (optionName.empty() ? "" : " ") + token;
     }
-
     // TT table size
     if (optionName == "Hash"){
         iss >> token;
         globalTT.setSize(stoi(token));
     }
-
     // Thread couunt
     if (optionName == "Threads"){
         iss >> token;
@@ -328,25 +328,27 @@ void setPos(std::istringstream &iss){
     // First, read the fen and set up the board. Also read the "moves" token
     if (token == "startpos"){
         board.readFen(startPosFen);
-        iss >> token; // Read "moves" token
+
+        // Read "moves" token
+        iss >> token; 
     }
     else{
         std::string fen = "";
         while (iss >> token and token != "moves")
             fen += token + " ";
+            
         board.readFen(fen);
     }
     // Now play the remaining moves
     while (iss >> token){
-        // Play the moves while resetting our stack if it is a move that resets fmr
         move_t move = stringToMove(token);
         bool fmr = board.moveCaptType(move) != noPiece or board.movePieceType(move) == pawn;
 
         board.makeMove(move);
 
-        if (fmr){
+        // Reset the stack if we have a fifty move rule reset
+        if (fmr)
             board.resetStack();
-        }
     }
 }
 
@@ -362,7 +364,7 @@ void doLoop(){
         if (token == "uci"){
             printInfo();
         }
-        // Start a new game (clear TT to make it deterministic)
+        // Start a new game (we should also clear TT)
         else if (token == "ucinewgame"){
             board.readFen(startPosFen);
             globalTT.clearTT(); 

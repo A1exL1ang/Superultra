@@ -16,13 +16,19 @@
 
 const int clusterSize = 4;
 
+// Values for age and bound encoding
 const ttFlagAge_t boundLower = 64;
 const ttFlagAge_t boundUpper = 128;
 const ttFlagAge_t boundExact = boundLower | boundUpper; 
 const ttFlagAge_t ageCycle = 63;
-
 const ttFlagAge_t ageBits = 63;
 const ttFlagAge_t boundBits = 192;
+
+// Hash values
+extern ttKey_t ttRngPiece[7][2][64]; 
+extern ttKey_t ttRngTurn;
+extern ttKey_t ttRngEnpass[16];
+extern ttKey_t ttRngCastle[16];
 
 struct ttEntry{
     ttKey_t zhash;
@@ -64,38 +70,34 @@ struct ttStruct{
 
     void clearTT();
     void setSize(uint64_t megabytes);
-    bool probe(ttKey_t zhash, ttEntry &tte, depth_t ply);
 
+    bool probe(ttKey_t zhash, ttEntry &tte, depth_t ply);
     void addToTT(ttKey_t zhash, score_t score, score_t staticEval, move_t bestMove, depth_t depth, depth_t ply, ttFlagAge_t bound, bool pvNode);
-    void incrementAge();
-    void prefetch(ttKey_t zhash);
+    
     int hashFullness();
+
+    inline void incrementAge(){
+        currentAge = ((currentAge + 1) & ageCycle);
+    }
+    inline void prefetch(ttKey_t zhash){
+        __builtin_prefetch(&table[zhash & maskMod]);
+    }
 };
 
 // Our global TT
-
 extern ttStruct globalTT;
 
-// ttRngPiece : Hash for each [Piece][Color][Square]
-// ttRngTurn  : Hash for turn -- xor if black
-// ttRngEnpass: Hash for en passant file; size is 15 since nullEnpass is 15
-// ttRngCastle: Hash for each castle mask
-
-extern ttKey_t ttRngPiece[7][2][64]; 
-extern ttKey_t ttRngTurn;
-extern ttKey_t ttRngEnpass[16];
-extern ttKey_t ttRngCastle[16];
-
 // Bits [0...5] are age and [6...7] is bound
-
 inline ttFlagAge_t encodeAgeAndBound(ttFlagAge_t age, ttFlagAge_t bound){
     return age + bound;
 }
 
+// Bits [6...7] is bound
 inline ttFlagAge_t decodeBound(ttFlagAge_t val){
     return (val & boundBits);
 }
 
+// Bits [0...5] is age
 inline ttFlagAge_t decodeAge(ttFlagAge_t val){
     return (val & ageBits);
 }
@@ -117,7 +119,6 @@ inline score_t scoreFromTT(score_t score, depth_t rootPly){
 }
 
 // Quality
-
 inline int quality(ttEntry entry, ttFlagAge_t ttCurrentAge){
     // If nothing is there then set quality to 0 (which is lowest)
     if (entry.zhash == noHash) return 0;
@@ -132,5 +133,4 @@ inline int quality(ttEntry entry, ttFlagAge_t ttCurrentAge){
 }
 
 // Generate TT keys
-
 void initTT();

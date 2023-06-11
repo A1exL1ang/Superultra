@@ -55,10 +55,10 @@ void position::makeMove(move_t move){
     piece_t pieceType = getPieceType(board[st]);
     bool refresh = (pieceType == king and kingBucketId[turn == white ? st : flip(st)] != kingBucketId[turn == white ? en : flip(en)]);
 
-    // Step 2) Copy to next stack
+    // Step 2) Update next stack
     stk++;
 
-    pos[stk].captPieceType = (board[en] >> 1);
+    pos[stk].prevMoveCaptPieceType = (board[en] >> 1);
     pos[stk].prevMove = move;
 
     pos[stk].castleRights = pos[stk - 1].castleRights;
@@ -79,7 +79,7 @@ void position::makeMove(move_t move){
 
     // Step 4) Promotion
     else if (promo){
-        if (pos[stk].captPieceType) removePiece(en, !refresh);
+        if (pos[stk].prevMoveCaptPieceType) removePiece(en, !refresh);
         removePiece(st, !refresh);
         addPiece(promo, en, turn, !refresh);
     }
@@ -103,12 +103,12 @@ void position::makeMove(move_t move){
 
     // Step 6) All other moves
     else{
-        if (pos[stk].captPieceType) removePiece(en, !refresh);
+        if (pos[stk].prevMoveCaptPieceType) removePiece(en, !refresh);
         movePiece(pieceType, st, en, turn, !refresh);
     }
 
     // Step 7) Clock
-    pos[stk].halfMoveClock = (pos[stk].captPieceType or pieceType == pawn) ? 0 : pos[stk].halfMoveClock + 1;
+    pos[stk].halfMoveClock = (pos[stk].prevMoveCaptPieceType or pieceType == pawn) ? 0 : pos[stk].halfMoveClock + 1;
     pos[stk].moveCount++;
 
     // Step 8a) Clear zhash of ep and castle rights so we can fold everything into it afterwards
@@ -151,7 +151,7 @@ void position::undoLastMove(){
     piece_t pieceType = getPieceType(board[en]);
 
     // Step 3) En passant (note isEP won't work since we are working backwards)
-    if (pieceType == pawn and getFile(st) != getFile(en) and !pos[stk].captPieceType){
+    if (pieceType == pawn and getFile(st) != getFile(en) and !pos[stk].prevMoveCaptPieceType){
         square_t captSq = (turn == white ? en - 8 : en + 8);
         movePiece(pawn, en, st, turn, false);
         addPiece(pawn, captSq, !turn, false);
@@ -161,7 +161,7 @@ void position::undoLastMove(){
     else if (promo){
         removePiece(en, false);
         addPiece(pawn, st, turn, false);
-        if (pos[stk].captPieceType) addPiece(pos[stk].captPieceType, en, !turn, false);
+        if (pos[stk].prevMoveCaptPieceType) addPiece(pos[stk].prevMoveCaptPieceType, en, !turn, false);
     }
 
     // Step 5) Castle
@@ -183,7 +183,7 @@ void position::undoLastMove(){
     // Step 6) All other moves
     else{
         movePiece(pieceType, en, st, turn, false);
-        if (pos[stk].captPieceType) addPiece(pos[stk].captPieceType, en, !turn, false);
+        if (pos[stk].prevMoveCaptPieceType) addPiece(pos[stk].prevMoveCaptPieceType, en, !turn, false);
     }
 
     // Step 7) Rollback stacks
@@ -193,7 +193,7 @@ void position::undoLastMove(){
 void position::makeNullMove(){
     // Update all the stack stuff
     stk++;
-    pos[stk].captPieceType = noPiece;
+    pos[stk].prevMoveCaptPieceType = noPiece;
     pos[stk].prevMove = nullOrNoMove;
 
     pos[stk].castleRights = pos[stk - 1].castleRights;

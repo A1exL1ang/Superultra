@@ -105,15 +105,15 @@ void selectFromPGN(){
                 // We found a move
                 if (!inComment and isalpha(S[i])){
 
-                    /*
+                    
                     uciParams uci;
                     uci.timeIncr[board.getTurn()] = 0;
                     uci.movesToGo = 1;
                     uci.timeLeft[board.getTurn()] = 280;
 
-                    if (board.getTurn() == black)
+                    if (board.getTurn() == white)
                         beginSearch(board, uci);
-                    */
+                    
 
                     // Generate all moves 
                     moveList allMoves;
@@ -229,8 +229,8 @@ int main(){
     // REMOVE RETURN FROM PREFETCH
 
     // threadCount = 4;
-    // selectFromPGN();
-    // return 0;
+    selectFromPGN();
+    return 0;
 
     
 
@@ -303,12 +303,13 @@ int main(){
     }
     */
     // info depth 18 seldepth 31 score cp 39 nodes 1781651 time 700 nps 2545179 hashfull 369 pv e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4 f8c5 d4c6 b7c6 f1d3 d7d6 e1g1 g8e7 b1d2 e8g8 f1e1 e7g6 d2f3 f8e8 
-    board.readFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    // board.readFen("3Q4/8/4K3/8/8/6k1/4Q3/7q w - - 0 18");
 
+    board.readFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     uciParams uci;
     uci.timeIncr[board.getTurn()] = 0;
     uci.movesToGo = 1;
-    uci.timeLeft[board.getTurn()] = 20000;
+    uci.timeLeft[board.getTurn()] = 1000000;
 
     beginSearch(board, uci);
     std::cout<<"DONE"<<std::endl;
@@ -321,10 +322,18 @@ int main(){
     uci.timeLeft[board.getTurn()] = 10000;
 
     beginSearch(board, uci);
+
+    // alpha = std::max(alpha, mateLB);
+    // beta = std::min(beta, mateUB); 
 }
+// 2.0, 1.6, 1.6, 1.7, 2.7, 1.5, 0.96, 0.97, 0.99, 0.76
+/*
+info depth 52 seldepth 50 score mate 19 nodes 4342915283 time 147398 nps 29463866 hashfull 1000 pv g6g7 f3f2 f8e7 f2f1q e7f6 f1f6 g7h8q f6h8 d3d4 h8g7 h6g7 g8g7 e5e6 g7g6 e8d7 g6f5 d4d5 f5f4 e6e7 h7h5 e7e8q h5h4 d7e6 h4h3 e8h5 f4g3 d5d6 h3h2 d6d7 g3g2 h5e2 g2g3 d7d8q h2h1q d8g8 g3f4
+info depth 48 seldepth 49 score mate 19 nodes 3329615336 time  98114 nps 33936186 hashfull 1000 pv g6g7 f3f2 f8e7 f2f1q e7f6 f1f6 g7h8q f6h8 d3d4 h8g7 h6g7 g8g7 e5e6 g7f6 e8d7 h7h5 e6e7 h5h4 e7e8q f6f5 d4d5 f5f4 e8h5 f4e4 d5d6 e4e3 d7c7 e3d3 d6d7 d3d4 d7d8q d4c4 h5d1 c4c5 d8d4 c5b5 d1a4
+*/
 /*
 .\cutechess-cli `
--engine conf="E90_RandomizeDraw" `
+-engine conf="Superultra" `
 -engine conf="E88_SIMD2" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
@@ -334,7 +343,6 @@ int main(){
 -repeat 2 `
 -recover `
 -concurrency 8 `
--sprt elo0=0 elo1=5 alpha=0.05 beta=0.05 `
 -ratinginterval 10
 */
 

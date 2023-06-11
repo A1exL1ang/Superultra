@@ -8,33 +8,6 @@
 
 const static timePoint_t moveLag = 30;
 
-timePoint_t timer::getTime(){
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-}
-
-void timer::beginTimer(uint64 newAllottedTime){
-    startTime = getTime();
-    allottedTime = newAllottedTime;
-}
-
-uint64 timer::timeElapsed(){
-    return getTime() - startTime;
-}
-
-bool timer::outOfTime(){
-    return timeElapsed() >= allottedTime;
-}
-
-uint64 findOptimalTime(color_t col, uciParams uci){
-    return std::min(uci.timeLeft[col], uci.timeLeft[col] / uci.movesToGo + uci.timeIncr[col] * 4 / 5 - moveLag);
-}
-
-
-
-
-
-
-
 void timeMan::init(color_t col, uciParams uci){
     forceStop = false;
     lastBestMove = nullOrNoMove;
@@ -84,16 +57,4 @@ void timeMan::update(depth_t depthSearched, move_t bestMove, score_t score, doub
 
     if (depthSearched >= 10)
         optimalTime = averageTime * stabilityScale * scoreChangeScale * complexityScale;
-}
-
-timePoint_t timeMan::timeSpent(){
-    return getTime() - startTime;
-}
-
-bool timeMan::stopAfterSearch(){
-    return forceStop or timeSpent() >= optimalTime;
-}
-
-bool timeMan::stopDuringSearch(){
-    return forceStop or timeSpent() >= maximumTime;
 }

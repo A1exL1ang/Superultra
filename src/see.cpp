@@ -78,6 +78,7 @@ bool position::seeGreater(move_t move, score_t threshold){
         
         // If the opponent's last capture was with the king and we "captured" it then we win
         // Must put this before next if statement.
+        
         if (pieceTypeToBeCaptured == king)
             return (col == turn);
 

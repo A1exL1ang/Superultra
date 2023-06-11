@@ -12,7 +12,7 @@ ttKey_t ttRngCastle[16];
 
 static uint64 seed = 1928777382391231823ULL;
 
-uint64 genRand(){
+static inline uint64 genRand(){
     return seed = seed * 6364136223846793005ULL + 1442695040888963407ULL;
 }
 
@@ -105,14 +105,6 @@ void ttStruct::addToTT(ttKey_t zhash, score_t score, score_t staticEval, move_t 
     {
         bucket[replace] = newEntry;
     }
-}
-
-void ttStruct::incrementAge(){
-    currentAge = ((currentAge + 1) & ageCycle);
-}
-
-void ttStruct::prefetch(ttKey_t zhash){
-    __builtin_prefetch(&table[zhash & maskMod]);
 }
 
 int ttStruct::hashFullness(){

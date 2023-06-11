@@ -16,7 +16,7 @@ void neuralNetwork::addFeature(piece_t pieceType, square_t sq, color_t col, squa
     const int blackPerspIdx = getInputIndex(pieceType, col, sq, black, bking) * hiddenHalf;
     
 #if defined(__AVX__) || defined(__AVX2__)
-    const auto vectorAccumWhitePtr = reinterpret_cast<__m256i*>(&accum);
+    const auto vectorAccumWhitePtr = reinterpret_cast<__m256i*>(&accum[0]);
     const auto vectorWeightWhitePtr = reinterpret_cast<__m256i*>(&W1[whitePerspIdx]);
 
     const auto vectorAccumBlackPtr = reinterpret_cast<__m256i*>(&accum[hiddenHalf]);
@@ -44,7 +44,7 @@ void neuralNetwork::removeFeature(piece_t pieceType, square_t sq, color_t col, s
     int blackPerspIdx = getInputIndex(pieceType, col, sq, black, bking) * hiddenHalf;
 
 #if defined(__AVX__) || defined(__AVX2__)
-    const auto vectorAccumWhitePtr = reinterpret_cast<__m256i*>(&accum);
+    const auto vectorAccumWhitePtr = reinterpret_cast<__m256i*>(&accum[0]);
     const auto vectorWeightWhitePtr = reinterpret_cast<__m256i*>(&W1[whitePerspIdx]);
 
     const auto vectorAccumBlackPtr = reinterpret_cast<__m256i*>(&accum[hiddenHalf]);
@@ -75,7 +75,7 @@ void neuralNetwork::updateMove(piece_t pieceType, square_t st, square_t en, colo
     int blackPerspStIdx = getInputIndex(pieceType, col, st, black, bking) * hiddenHalf;
 
 #if defined(__AVX__) || defined(__AVX2__)
-    const auto vectorAccumWhitePtr = reinterpret_cast<__m256i*>(&accum);
+    const auto vectorAccumWhitePtr = reinterpret_cast<__m256i*>(&accum[0]);
     const auto vectorWeightStWhitePtr = reinterpret_cast<__m256i*>(&W1[whitePerspStIdx]);
     const auto vectorWeightEnWhitePtr = reinterpret_cast<__m256i*>(&W1[whitePerspEnIdx]);
 
@@ -105,7 +105,7 @@ void neuralNetwork::refresh(piece_t *board, square_t wking, square_t bking){
 #if defined(__AVX__) || defined(__AVX2__)
     const auto vectorAccumTopPtr = reinterpret_cast<__m256i*>(&accum[0]);
     const auto vectorAccumBotPtr = reinterpret_cast<__m256i*>(&accum[hiddenHalf]);
-    const auto vectorBiasPtr = reinterpret_cast<__m256i*>(&B1);
+    const auto vectorBiasPtr = reinterpret_cast<__m256i*>(&B1[0]);
     
     for (int i = 0; i < hiddenHalf / 16; i++){
         vectorAccumTopPtr[i] = vectorBiasPtr[i];
