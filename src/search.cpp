@@ -48,7 +48,7 @@ template<bool pvNode> static score_t qsearch(score_t alpha, score_t beta, depth_
         return 0;
 
     if (board.drawByRepetition(ply) or board.drawByInsufficientMaterial() or board.drawByFiftyMoveRule())
-        return 0;
+        return 1 - (sd.nodes & 2);
     
     if (ply > maximumPly)
         return board.eval();
@@ -190,7 +190,7 @@ template<bool pvNode> static score_t negamax(score_t alpha, score_t beta, depth_
         return qsearch<pvNode>(alpha, beta, ply, board, sd, ss);
     
     if (board.drawByRepetition(ply) or board.drawByInsufficientMaterial() or board.drawByFiftyMoveRule())
-        return 0;
+        return 1 - (sd.nodes & 2);
     
     // Step 2) Mate distance pruning (~0 elo)
     // We prunes trees that have no hope of improving our mate score (if we have one).

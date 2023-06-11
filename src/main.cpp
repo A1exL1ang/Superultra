@@ -105,7 +105,7 @@ void selectFromPGN(){
                 // We found a move
                 if (!inComment and isalpha(S[i])){
 
-
+                    /*
                     uciParams uci;
                     uci.timeIncr[board.getTurn()] = 0;
                     uci.movesToGo = 1;
@@ -113,6 +113,7 @@ void selectFromPGN(){
 
                     if (board.getTurn() == black)
                         beginSearch(board, uci);
+                    */
 
                     // Generate all moves 
                     moveList allMoves;
@@ -202,7 +203,7 @@ void selectFromPGN(){
     uciParams uci;
     uci.timeIncr[board.getTurn()] = 0;
     uci.movesToGo = 1;
-    uci.timeLeft[board.getTurn()] = 2000;
+    uci.timeLeft[board.getTurn()] = 200000;
 
     beginSearch(board, uci);
     std::cout<<"DONE"<<std::endl;
@@ -225,7 +226,7 @@ int main(){
         return 0;
     }
 
-
+    // REMOVE RETURN FROM PREFETCH
 
     // threadCount = 4;
     // selectFromPGN();
@@ -323,8 +324,8 @@ int main(){
 }
 /*
 .\cutechess-cli `
+-engine conf="E90_RandomizeDraw" `
 -engine conf="E88_SIMD2" `
--engine conf="E85_Razoring" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
 -pgnout "C:\Program Files\Cute Chess\Games\Games1.txt.txt" `
@@ -336,6 +337,8 @@ int main(){
 -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05 `
 -ratinginterval 10
 */
+
+// -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05 `
 
 /*
     for (int i = 0; i < hiddenHalf; i += 16){

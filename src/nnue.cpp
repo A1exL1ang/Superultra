@@ -136,9 +136,9 @@ score_t neuralNetwork::eval(color_t col){
 
 #if defined(__AVX__) || defined(__AVX2__)
     // Vector of int32 to avoid overflow
-    __m256i vectorEval = _mm256_setzero_si256();
-    const __m256i vectorCreluL = _mm256_set1_epi16(creluL);
-    const __m256i vectorCreluR = _mm256_set1_epi16(creluR);
+    auto vectorEval = _mm256_setzero_si256();
+    const auto vectorCreluL = _mm256_set1_epi16(creluL);
+    const auto vectorCreluR = _mm256_set1_epi16(creluR);
 
     const auto vectorAccumTopPtr = reinterpret_cast<__m256i*>(&accum[topIdx]);
     const auto vectorWeightTopPtr = reinterpret_cast<__m256i*>(&W2[0]);
