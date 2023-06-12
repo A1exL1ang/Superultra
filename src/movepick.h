@@ -18,10 +18,11 @@ struct moveList{
     inline void bringBest(int start){
         int best = start;  
 
-        for (int i = start + 1; i < sz; i++)
-            if (moves[i].score > moves[best].score)
+        for (int i = start + 1; i < sz; i++){
+            if (moves[i].score > moves[best].score){
                 best = i;
-            
+            }
+        }
         std::swap(moves[start], moves[best]);
     }
 };

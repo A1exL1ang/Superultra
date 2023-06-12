@@ -22,19 +22,22 @@ bool position::seeGreater(move_t move, score_t threshold){
     // 2) Assume en passant is worth a free pawn (score = pawn)
     // 3) Castling has a score of 0
 
-    if (movePromo(move)) 
+    if (movePromo(move) != noPiece){
         return true;
-    if (isEP(move))
+    }
+    if (isEP(move)){
         return threshold <= pieceScore[pawn];
-    if (movePieceType == king and abs(getFile(st) - getFile(target)) == 2)
+    }
+    if (movePieceType == king and abs(getFile(st) - getFile(target)) == 2){
         return threshold <= 0;
-
+    }
     // Perform the initial capture (note that capt == noPiece may be true)
     score_t score = pieceScore[moveCaptType];
 
     // Cur player is not above the threshold after initially capturing
-    if (score < threshold)
+    if (score < threshold){
         return false;
+    }
 
     // pieceTypeToBeCaptured is the piece that is at the square waiting to be captured
     // col is the color that is going to capture pieceTypeToBeCaptured
@@ -69,8 +72,9 @@ bool position::seeGreater(move_t move, score_t threshold){
         }
 
         // We fail to be above/at the threshold because we can't capture so !col wins
-        if (!lva)
+        if (!lva){
             return (!col == turn); 
+        }
 
         // We capture pieceTypeToBeCaptured and update score (make everything relative to us)
         score = -score + pieceScore[pieceTypeToBeCaptured];
@@ -79,13 +83,13 @@ bool position::seeGreater(move_t move, score_t threshold){
         // If the opponent's last capture was with the king and we "captured" it then we win
         // Must put this before next if statement.
         
-        if (pieceTypeToBeCaptured == king)
+        if (pieceTypeToBeCaptured == king){
             return (col == turn);
-
+        }
         // We fail to be above/at the threshold after capturing so !col wins
-        if (score < threshold)
+        if (score < threshold){
             return (!col == turn);
-        
+        }
         // Flip color and set the current piece at the square to be our least valuable attacker
         pieceTypeToBeCaptured = lva;
         col ^= 1;

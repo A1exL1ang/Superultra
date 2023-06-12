@@ -8,7 +8,7 @@
 
 const static timePoint_t moveLag = 30;
 
-void timeMan::init(color_t col, uciParams uci){
+void timeMan::init(color_t col, uciSearchLims uci){
     forceStop = false;
     lastBestMove = nullOrNoMove;
     lastScore = noScore;
@@ -55,6 +55,7 @@ void timeMan::update(depth_t depthSearched, move_t bestMove, score_t score, doub
 
     // First few depths are unstable
 
-    if (depthSearched >= 10)
+    if (depthSearched >= 10){
         optimalTime = averageTime * stabilityScale * scoreChangeScale * complexityScale;
+    }
 }

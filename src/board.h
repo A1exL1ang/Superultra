@@ -43,10 +43,7 @@ public:
     // Fen and debug related
     void readFen(std::string fen);
     std::string getFen();
-    std::string flippedFen();
     void resetStack();
-    void printBoard();
-    void verifyConsistency();
 
     // Interface and utility access
     inline color_t getTurn(){
@@ -68,18 +65,18 @@ public:
         bitboard_t attacked = 0;
         attacked |= pawnsAllAttack(pieceBB[pawn][col], col) | kingAttack(kingSq(col));
 
-        for (bitboard_t m = pieceBB[knight][col]; m;)
+        for (bitboard_t m = pieceBB[knight][col]; m;){
             attacked |= knightAttack(poplsb(m));
-        
-        for (bitboard_t m = pieceBB[bishop][col]; m;)
+        }
+        for (bitboard_t m = pieceBB[bishop][col]; m;){
             attacked |= bishopAttack(poplsb(m), allBB);
-
-        for (bitboard_t m = pieceBB[rook][col]; m;)
+        }
+        for (bitboard_t m = pieceBB[rook][col]; m;){
             attacked |= rookAttack(poplsb(m), allBB);
-        
-        for (bitboard_t m = pieceBB[queen][col]; m;)
+        }
+        for (bitboard_t m = pieceBB[queen][col]; m;){
             attacked |= queenAttack(poplsb(m), allBB);
-        
+        }
         return attacked;
     }
     inline bool inCheck(){
@@ -104,8 +101,8 @@ public:
     }
 
 private:
-    // Position stack (UCI doesnt support undo so we dont either)
-    // We store the bare minimum and reset the stack when necessary
+    // Position stack (UCI doesnt support undo so we store the minimum (up to 50mr)
+    // and reset the stack when necessary)
     boardState pos[maximumPly + 105];
     int stk;
 

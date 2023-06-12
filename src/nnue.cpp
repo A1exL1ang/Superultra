@@ -148,7 +148,7 @@ score_t neuralNetwork::eval(color_t col){
 
     // The only thing i'll note here is that _mm256_madd_epi16(a, b) is very useful.
     // The function takes in two int16 vectors and multiplies eveyr pair of elems and then
-    // adds adjacent elements so you are finally left with a int32 vector!
+    // adds adjacent elements so you are finally left with a int32 vector
 
     for (int i = 0; i < hiddenHalf / 16; i++){
         vectorEval = _mm256_add_epi32(
@@ -169,8 +169,9 @@ score_t neuralNetwork::eval(color_t col){
         );
     }
     // Finally, horizontally add. Speed here doesnt really matter
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 8; i++){
         eval += _mm256_extract_epi32(vectorEval, i);
+    }
 #else
     for (int i = 0; i < hiddenHalf; i++){
         int16 input = accum[topIdx + i];

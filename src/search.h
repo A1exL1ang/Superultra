@@ -44,4 +44,5 @@ struct searchData{
 };
 
 void initLMR();
-void beginSearch(position board, uciParams uci);
+void endSearch();
+void beginSearch(position board, uciSearchLims lims);

@@ -13,8 +13,9 @@ void position::addPiece(piece_t pieceType, square_t sq, color_t col, bool update
     board[sq] = encodePiece(pieceType, col);
     pos[stk].zhash ^= ttRngPiece[pieceType][col][sq];
 
-    if (updateAccum) 
+    if (updateAccum){
         pos[stk].nnue.addFeature(pieceType, sq, col, kingSq(white), kingSq(black));
+    }
 }
 
 void position::removePiece(square_t sq, bool updateAccum){
@@ -26,11 +27,12 @@ void position::removePiece(square_t sq, bool updateAccum){
     pieceBB[pieceType][col] ^= (1ULL << sq);
     colorBB[col] ^= (1ULL << sq);
     allBB ^= (1ULL << sq);
-    board[sq] = 0;
+    board[sq] = noPiece;
     pos[stk].zhash ^= ttRngPiece[pieceType][col][sq];
 
-    if (updateAccum) 
+    if (updateAccum){
         pos[stk].nnue.removeFeature(pieceType, sq, col, kingSq(white), kingSq(black));
+    }
 }
 
 void position::movePiece(piece_t piece, square_t st, square_t en, color_t col, bool updateAccum){
@@ -43,8 +45,9 @@ void position::movePiece(piece_t piece, square_t st, square_t en, color_t col, b
     board[en] = encodePiece(piece, col);
     pos[stk].zhash ^= ttRngPiece[piece][col][st] ^ ttRngPiece[piece][col][en];
     
-    if (updateAccum) 
+    if (updateAccum){ 
         pos[stk].nnue.updateMove(piece, st, en, col, kingSq(white), kingSq(black));
+    }
 }
 
 void position::makeMove(move_t move){
@@ -79,7 +82,9 @@ void position::makeMove(move_t move){
 
     // Step 4) Promotion
     else if (promo){
-        if (pos[stk].prevMoveCaptPieceType) removePiece(en, !refresh);
+        if (pos[stk].prevMoveCaptPieceType){
+            removePiece(en, !refresh);
+        }
         removePiece(st, !refresh);
         addPiece(promo, en, turn, !refresh);
     }
@@ -89,11 +94,13 @@ void position::makeMove(move_t move){
         square_t stRook;
         square_t enRook;
         
-        if (st < en){ // Kingside
+        // Kingside
+        if (st < en){ 
             stRook = (turn == white ? h1 : h8); 
             enRook = (turn == white ? f1 : f8);
         }
-        else{ // Queenside
+        // Queenside
+        else{ 
             stRook = (turn == white ? a1 : a8);
             enRook = (turn == white ? d1 : d8);
         }
@@ -103,7 +110,9 @@ void position::makeMove(move_t move){
 
     // Step 6) All other moves
     else{
-        if (pos[stk].prevMoveCaptPieceType) removePiece(en, !refresh);
+        if (pos[stk].prevMoveCaptPieceType){
+            removePiece(en, !refresh);
+        }
         movePiece(pieceType, st, en, turn, !refresh);
     }
 
@@ -118,8 +127,9 @@ void position::makeMove(move_t move){
     pos[stk].epFile = (pieceType == pawn and abs(getRank(st) - getRank(en)) == 2) ? getFile(st) : noEP;
     
     // Step 8c) Castle rights if we move king
-    if (pieceType == king) 
+    if (pieceType == king){
         pos[stk].castleRights &= (turn == white ? (castleBlackK | castleBlackQ) : (castleWhiteK | castleWhiteQ));
+    }
     
     // Step 8d) Castle rights if we altered any rook positions through moving or capturing 
     pos[stk].castleRights &= ((st != h1 and en != h1) * castleWhiteK)
@@ -161,7 +171,9 @@ void position::undoLastMove(){
     else if (promo){
         removePiece(en, false);
         addPiece(pawn, st, turn, false);
-        if (pos[stk].prevMoveCaptPieceType) addPiece(pos[stk].prevMoveCaptPieceType, en, !turn, false);
+        if (pos[stk].prevMoveCaptPieceType){
+            addPiece(pos[stk].prevMoveCaptPieceType, en, !turn, false);
+        }
     }
 
     // Step 5) Castle
@@ -183,7 +195,9 @@ void position::undoLastMove(){
     // Step 6) All other moves
     else{
         movePiece(pieceType, en, st, turn, false);
-        if (pos[stk].prevMoveCaptPieceType) addPiece(pos[stk].prevMoveCaptPieceType, en, !turn, false);
+        if (pos[stk].prevMoveCaptPieceType){
+            addPiece(pos[stk].prevMoveCaptPieceType, en, !turn, false);
+        }
     }
 
     // Step 7) Rollback stacks

@@ -11,8 +11,9 @@ void initLineBB(){
     for (square_t sq = 0; sq < 64; sq++){
         for (int8 di : {-1, 0, 1}){
             for (int8 dj : {-1, 0, 1}){
-                if (!di and !dj) continue;
-
+                if (!di and !dj){
+                    continue;
+                }
                 rank_t i = getRank(sq);
                 file_t j = getFile(sq);
                 bitboard_t pathMask = 0; 
@@ -47,13 +48,12 @@ static void initSingleMagic(square_t sq, bool isBishop){
         }
         for (int8 di : {-1, 0, 1}){
             for (int8 dj : {-1, 0, 1}){
-                if (!di and !dj)
+                if ((!di and !dj)
+                    or (isBishop and abs(di) != abs(dj))
+                    or (!isBishop and abs(di) == abs(dj)))
+                {
                     continue;
-                if (isBishop and abs(di) != abs(dj))
-                    continue;
-                if (!isBishop and abs(di) == abs(dj))
-                    continue;
-                
+                }
                 rank_t i = getRank(sq);
                 file_t j = getFile(sq);
 
@@ -62,8 +62,9 @@ static void initSingleMagic(square_t sq, bool isBishop){
                     attack[blkMask] |= (1ULL << curSq);
 
                     // We stop if we hit blocker but our mask is still inclusive of it
-                    if (blocker[blkMask] & (1ULL << curSq)) 
+                    if (blocker[blkMask] & (1ULL << curSq)){
                         break; 
+                    }
                 }
             }
         }

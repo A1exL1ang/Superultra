@@ -17,29 +17,36 @@ static inline uint64 genRand(){
 }
 
 void initTT(){
-    for (piece_t pieceType : {pawn, knight, bishop, rook, queen, king})
-        for (color_t col : {0, 1})
-            for (square_t sq = 0; sq < 64; sq++)
+    for (piece_t pieceType : {pawn, knight, bishop, rook, queen, king}){
+        for (color_t col : {white, black}){
+            for (square_t sq = 0; sq < 64; sq++){
                 ttRngPiece[pieceType][col][sq] = genRand();
+            }
+        }
+    }
 
     ttRngTurn = genRand();
     
-    for (file_t enpassFile = 0; enpassFile <= 7; enpassFile++)
+    for (file_t enpassFile = 0; enpassFile <= 7; enpassFile++){
         ttRngEnpass[enpassFile] = genRand();
-        
-    for (int8 castle = 0; castle < 16; castle++)
+    }   
+    for (int8 castle = 0; castle < 16; castle++){
         ttRngCastle[castle] = genRand();
+    }
 }
 
 void ttStruct::clearTT(){
-    for (int i = 0; i < sz; i++)
-        for (int j = 0; j < clusterSize; j++)
+    for (int i = 0; i < sz; i++){
+        for (int j = 0; j < clusterSize; j++){
             table[i].dat[j] = ttEntry();
+        }
+    }
 }
 
 void ttStruct::setSize(uint64 megabytes){
-    if (sz)
+    if (sz){
         free(table);
+    }
 
     sz = 1024;
     while (2 * sz * sizeof(ttCluster) <= (megabytes << 20))
@@ -109,9 +116,12 @@ void ttStruct::addToTT(ttKey_t zhash, score_t score, score_t staticEval, move_t 
 
 int ttStruct::hashFullness(){
     int counter = 0;
-    for (int i = 0; i < 1000 / clusterSize; i++)
-        for (int j = 0; j < clusterSize; j++)
-            if (decodeAge(table[i].dat[j].ageAndBound) == currentAge)
-                counter += table[i].dat[j].zhash != 0;
+    for (int i = 0; i < 1000 / clusterSize; i++){
+        for (int j = 0; j < clusterSize; j++){
+            if (decodeAge(table[i].dat[j].ageAndBound) == currentAge){
+                counter += (table[i].dat[j].zhash != noHash);
+            }
+        }
+    }
     return counter;
 }

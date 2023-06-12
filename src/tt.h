@@ -107,27 +107,31 @@ inline ttFlagAge_t decodeAge(ttFlagAge_t val){
 // to the entire search tree, then our score is (mateScore - 5) relative to the ply 5 node.
 
 inline score_t scoreToTT(score_t score, depth_t rootPly){
-    if (abs(score) >= foundMate) 
+    if (abs(score) >= foundMate){
         return score > 0 ? score + rootPly : score - rootPly;
+    }
     return score;
 }
 
 inline score_t scoreFromTT(score_t score, depth_t rootPly){
-    if (abs(score) >= foundMate) 
+    if (abs(score) >= foundMate){
         return score > 0 ? score - rootPly : score + rootPly;
+    }
     return score;
 }
 
 // Quality
 inline int quality(ttEntry entry, ttFlagAge_t ttCurrentAge){
     // If nothing is there then set quality to 0 (which is lowest)
-    if (entry.zhash == noHash) return 0;
-
+    if (entry.zhash == noHash){
+        return 0;
+    }
     // Be careful about age "wrapping around" and add ageCycle+1 to make age positive
     int age = static_cast<int>(decodeAge(entry.ageAndBound)) + static_cast<int>(ageCycle) + 1;
-    if (age > ttCurrentAge) age -= ageCycle;
-    assert(age > 0);
 
+    if (age > ttCurrentAge){
+        age -= ageCycle;
+    }
     // Quality is age * 4 + depth
     return age * 4 + entry.depth;
 }

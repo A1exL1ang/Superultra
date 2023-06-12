@@ -42,12 +42,12 @@ movescore_t getQuietHistory(move_t move, depth_t ply, position &board, searchDat
 
     score += sd.history[board.getTurn()][moveFrom(move)][moveTo(move)];
     
-    if (ply >= 1 and (ss - 1)->move != nullOrNoMove)
+    if (ply >= 1 and (ss - 1)->move != nullOrNoMove){
         score += 2 * (*(ss - 1)->contHist)[board.movePieceEnc(move)][moveTo(move)];
-
-    if (ply >= 2 and (ss - 2)->move != nullOrNoMove)
+    }
+    if (ply >= 2 and (ss - 2)->move != nullOrNoMove){
         score += 2 * (*(ss - 2)->contHist)[board.movePieceEnc(move)][moveTo(move)];
-
+    }
     return score;
 }
 
@@ -58,9 +58,9 @@ void updateAllHistory(move_t bestMove, moveList &quiets, depth_t depth, depth_t 
         sd.killers[ply][0] = bestMove;
     }
     // Set counter
-    if (ply >= 1 and (ss - 1)->move != nullOrNoMove)
+    if (ply >= 1 and (ss - 1)->move != nullOrNoMove){
         *(ss - 1)->counter = bestMove;
-
+    }
     // Update history values by penalizing failing moves and incrementing best move
     for (int i = 0; i < quiets.sz; i++){
         move_t move = quiets.moves[i].move;
@@ -68,11 +68,12 @@ void updateAllHistory(move_t bestMove, moveList &quiets, depth_t depth, depth_t 
             
         updateHistoryValue(sd.history[board.getTurn()][moveFrom(move)][moveTo(move)], bonus);
 
-        if (ply >= 1 and (ss - 1)->move != nullOrNoMove)
+        if (ply >= 1 and (ss - 1)->move != nullOrNoMove){
             updateHistoryValue((*(ss - 1)->contHist)[board.movePieceEnc(move)][moveTo(move)], bonus);
-            
-        if (ply >= 2 and (ss - 2)->move != nullOrNoMove)
+        }   
+        if (ply >= 2 and (ss - 2)->move != nullOrNoMove){
             updateHistoryValue((*(ss - 2)->contHist)[board.movePieceEnc(move)][moveTo(move)], bonus);
+        }
     }   
 }
 

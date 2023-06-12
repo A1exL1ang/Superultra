@@ -13,8 +13,9 @@ void position::calcPins(bitboard_t &pinHV, bitboard_t &pinDA){
         bitboard_t toKing = between(sq, kingSq(turn)) ^ pieceBB[king][turn] ^ (1ULL << sq); 
 
         // Check if they pin us
-        if (countOnes(toKing & colorBB[turn]) == 1)
+        if (countOnes(toKing & colorBB[turn]) == 1){
             pinDA |= toKing | (1ULL << sq); 
+        }
     }
 
     // Horizontal
@@ -27,8 +28,9 @@ void position::calcPins(bitboard_t &pinHV, bitboard_t &pinDA){
         bitboard_t toKing = between(sq, kingSq(turn)) ^ pieceBB[king][turn] ^ (1ULL << sq); 
 
         // Check if they pin us
-        if (countOnes(toKing & colorBB[turn]) == 1)
+        if (countOnes(toKing & colorBB[turn]) == 1){
             pinHV |= toKing | (1ULL << sq); 
+        }
     }
 }
 
@@ -37,8 +39,9 @@ void position::calcAttacks(bitboard_t &attacked, bitboard_t &okSq){
     bitboard_t pawnAtt = pawnsAllAttack(pieceBB[pawn][!turn], !turn);
     attacked |= pawnAtt;
     
-    if (pawnAtt & pieceBB[king][turn])
+    if (pawnAtt & pieceBB[king][turn]){
         okSq &= (pieceBB[pawn][!turn] & pawnAttack(kingSq(turn), turn));
+    }
 
     // King
     bitboard_t kingAtt = kingAttack(lsb(pieceBB[king][!turn]));
@@ -52,8 +55,9 @@ void position::calcAttacks(bitboard_t &attacked, bitboard_t &okSq){
         attacked |= att;
 
         // They hit our king
-        if (att & pieceBB[king][turn])
+        if (att & pieceBB[king][turn]){
             okSq &= (1ULL << sq);
+        }
     }
 
     // Bishops
@@ -64,8 +68,9 @@ void position::calcAttacks(bitboard_t &attacked, bitboard_t &okSq){
         attacked |= att;
         
         // They hit our king
-        if (att & pieceBB[king][turn])
+        if (att & pieceBB[king][turn]){
             okSq &= lineBB[sq][kingSq(turn)];
+        }
     }
 
     // Rooks
@@ -76,8 +81,9 @@ void position::calcAttacks(bitboard_t &attacked, bitboard_t &okSq){
         attacked |= att;
 
         // They hit our king
-        if (att & pieceBB[king][turn])
+        if (att & pieceBB[king][turn]){
             okSq &= lineBB[sq][kingSq(turn)];
+        }
     }
 
     // Queens
@@ -88,8 +94,9 @@ void position::calcAttacks(bitboard_t &attacked, bitboard_t &okSq){
         attacked |= att;
 
         // They hit our king
-        if (att & pieceBB[king][turn])
+        if (att & pieceBB[king][turn]){
             okSq &= lineBB[sq][kingSq(turn)];
+        }
     }
 }
 
@@ -104,13 +111,13 @@ void position::genPawnMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitb
     bitboard_t pawnPinnedHV = (pieceBB[pawn][turn] & pinHV);
 
     // Directional captures. Either the pawn is not pinned at all or is diagonally 
-    // pinned. If it is the latter, then the pawn can only capture in one direction.
+    // pinned. If it is the latter, then the pawn can only capture in one direction
     bitboard_t pawnCaptLeftEnd = (pawnsLeftAttack(pawnNotPinned, turn) | (pawnsLeftAttack(pawnPinnedDA, turn) & pinDA));
     bitboard_t pawnCaptRightEnd = (pawnsRightAttack(pawnNotPinned, turn) | (pawnsRightAttack(pawnPinnedDA, turn) & pinDA));
     pawnCaptLeftEnd &= (colorBB[!turn] & okSq);
     pawnCaptRightEnd &= (colorBB[!turn] & okSq);
 
-    // Pawn pushes. Either the pawn is not pinned at all or is vertically pinned.
+    // Pawn pushes. Either the pawn is not pinned at all or is vertically pinned
     bitboard_t pawnPushEnd = (pawnsUp(pawnNotPinned, turn) | (pawnsUp(pawnPinnedHV, turn) & pinHV));
     bitboard_t pawnDoublePushEnd = pawnsUp(((pawnPushEnd & (~allBB)) & rank3), turn);
     pawnPushEnd &= (okSq & (~allBB));
@@ -199,9 +206,9 @@ void position::genKnightMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bi
         square_t st = poplsb(m);
         bitboard_t maskMoves = (knightAttack(st) & okSq);
 
-        if (noisy)
+        if (noisy){
             maskMoves &= colorBB[!turn];
-
+        }
         while (maskMoves){
             square_t en = poplsb(maskMoves);
             moves.addMove(encodeMove(st, en, noPiece));
@@ -217,9 +224,9 @@ void position::genBishopMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bi
                              & okSq
                              & ((pinDA & (1ULL << st)) ? pinDA : all));
 
-        if (noisy)
+        if (noisy){
             maskMoves &= colorBB[!turn];
-
+        }
         while (maskMoves){
             square_t en = poplsb(maskMoves);
             moves.addMove(encodeMove(st, en, noPiece));
@@ -235,9 +242,9 @@ void position::genRookMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitb
                              & okSq
                              & ((pinHV & (1ULL << st)) ? pinHV : all));
 
-        if (noisy)
+        if (noisy){
             maskMoves &= colorBB[!turn];
-
+        }
         while (maskMoves){
             square_t en = poplsb(maskMoves);
             moves.addMove(encodeMove(st, en, noPiece));
@@ -254,16 +261,16 @@ void position::genQueenMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bit
         bitboard_t maskMoves = bishopMoves | rookMoves;
 
         // Pinned diagonally
-        if ((1ULL << sq) & pinDA)
+        if ((1ULL << sq) & pinDA){
             maskMoves &= (bishopMoves & pinDA);
-        
+        }
         // Pinned horizontally
-        if ((1ULL << sq) & pinHV)
+        if ((1ULL << sq) & pinHV){
             maskMoves &= (rookMoves & pinHV);
-
-        if (noisy)
+        }
+        if (noisy){
             maskMoves &= colorBB[!turn];
-
+        }
         while (maskMoves){
             square_t en = poplsb(maskMoves);
             moves.addMove(encodeMove(sq, en, noPiece));
@@ -277,9 +284,9 @@ void position::genKingMoves(bool noisy, bitboard_t attacked, moveList &moves){
     // Generate regular moves
     bitboard_t maskRegularMoves = (kingAttack(sq) & (~attacked) & (~colorBB[turn]));
 
-    if (noisy)
+    if (noisy){
         maskRegularMoves &= colorBB[!turn];
-
+    }
     while (maskRegularMoves){
         square_t en = poplsb(maskRegularMoves);
         moves.addMove(encodeMove(sq, en, noPiece));
