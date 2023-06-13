@@ -4,7 +4,7 @@
 #include "types.h"
 #include "attacks.h"
 
-bool position::seeGreater(move_t move, score_t threshold){
+bool position::seeGreater(Move move, Score threshold){
     // SEE basically calculates the result of a qsearch if we only consider the
     // destination square. We return whether the result is >= capture. We 
     // assume that (initial piece color == colorToMove) and that the move is legal.
@@ -12,10 +12,10 @@ bool position::seeGreater(move_t move, score_t threshold){
     // You can think of this as "ping pong" across the threshold. After the current player 
     // captures, their score must be greater/equal to the threshold (relative to them)
 
-    square_t st = moveFrom(move);
-    square_t target = moveTo(move);
-    piece_t movePieceType = getPieceType(board[st]);
-    piece_t moveCaptType = getPieceType(board[target]);
+    Square st = moveFrom(move);
+    Square target = moveTo(move);
+    Piece movePieceType = getPieceType(board[st]);
+    Piece moveCaptType = getPieceType(board[target]);
 
     // Deal with special moves:
     // 1) Always return true for promotion
@@ -32,7 +32,7 @@ bool position::seeGreater(move_t move, score_t threshold){
         return threshold <= 0;
     }
     // Perform the initial capture (note that capt == noPiece may be true)
-    score_t score = pieceScore[moveCaptType];
+    Score score = pieceScore[moveCaptType];
 
     // Cur player is not above the threshold after initially capturing
     if (score < threshold){
@@ -42,12 +42,12 @@ bool position::seeGreater(move_t move, score_t threshold){
     // pieceTypeToBeCaptured is the piece that is at the square waiting to be captured
     // col is the color that is going to capture pieceTypeToBeCaptured
 
-    piece_t pieceTypeToBeCaptured = movePieceType;
-    color_t col = !turn;
-    bitboard_t occupancy = (allBB ^ (1ULL << st)) | (1ULL << target);
+    Piece pieceTypeToBeCaptured = movePieceType;
+    Color col = !turn;
+    Bitboard occupancy = (allBB ^ (1ULL << st)) | (1ULL << target);
 
     // Initialize attackers with non-sliders
-    bitboard_t attackers = (pawnAttack(target, black) & pieceBB[pawn][white])
+    Bitboard attackers = (pawnAttack(target, black) & pieceBB[pawn][white])
                          | (pawnAttack(target, white) & pieceBB[pawn][black])
                          | (knightAttack(target) & allPiece(knight))
                          | (kingAttack(target) & allPiece(king));
@@ -61,10 +61,10 @@ bool position::seeGreater(move_t move, score_t threshold){
         attackers &= occupancy;
 
         // The least valuable attacker
-        piece_t lva = 0;
+        Piece lva = 0;
 
-        for (piece_t pieceType : {pawn, knight, bishop, rook, queen, king}){
-            if (bitboard_t pieceAttacker = (attackers & pieceBB[pieceType][col]); pieceAttacker){
+        for (Piece pieceType : {pawn, knight, bishop, rook, queen, king}){
+            if (Bitboard pieceAttacker = (attackers & pieceBB[pieceType][col]); pieceAttacker){
                 lva = pieceType;
                 occupancy ^= (1ULL << lsb(pieceAttacker));
                 break;

@@ -1,14 +1,15 @@
 #include <cstring>
+#include <memory>
 #include "types.h"
 #include "helpers.h"
 #include "tt.h"
 
 ttStruct globalTT;
 
-ttKey_t ttRngPiece[7][2][64]; 
-ttKey_t ttRngTurn;
-ttKey_t ttRngEnpass[16];
-ttKey_t ttRngCastle[16];
+TTKey ttRngPiece[7][2][64]; 
+TTKey ttRngTurn;
+TTKey ttRngEnpass[16];
+TTKey ttRngCastle[16];
 
 static uint64 seed = 1928777382391231823ULL;
 
@@ -17,9 +18,9 @@ static inline uint64 genRand(){
 }
 
 void initTT(){
-    for (piece_t pieceType : {pawn, knight, bishop, rook, queen, king}){
-        for (color_t col : {white, black}){
-            for (square_t sq = 0; sq < 64; sq++){
+    for (Piece pieceType : {pawn, knight, bishop, rook, queen, king}){
+        for (Color col : {white, black}){
+            for (Square sq = 0; sq < 64; sq++){
                 ttRngPiece[pieceType][col][sq] = genRand();
             }
         }
@@ -27,7 +28,7 @@ void initTT(){
 
     ttRngTurn = genRand();
     
-    for (file_t enpassFile = 0; enpassFile <= 7; enpassFile++){
+    for (File enpassFile = 0; enpassFile <= 7; enpassFile++){
         ttRngEnpass[enpassFile] = genRand();
     }   
     for (int8 castle = 0; castle < 16; castle++){
@@ -44,10 +45,6 @@ void ttStruct::clearTT(){
 }
 
 void ttStruct::setSize(uint64 megabytes){
-    if (sz){
-        free(table);
-    }
-
     sz = 1024;
     while (2 * sz * sizeof(ttCluster) <= (megabytes << 20))
         sz *= 2;
@@ -55,13 +52,13 @@ void ttStruct::setSize(uint64 megabytes){
     // (% tt size) is equivilant to (& maskMod)
     maskMod = sz - 1;
 
-    table = static_cast<ttCluster *>(malloc(sz * sizeof(ttCluster)));
+    table.reset(new ttCluster[sz]);
 
     clearTT();
     currentAge = 0;
 }
 
-bool ttStruct::probe(ttKey_t probehash, ttEntry &tte, depth_t ply){
+bool ttStruct::probe(TTKey probehash, ttEntry &tte, Depth ply){
     ttEntry *bucket = &table[(probehash & maskMod)].dat[0];
 
     for (int i = 0; i < clusterSize; i++){
@@ -81,7 +78,7 @@ bool ttStruct::probe(ttKey_t probehash, ttEntry &tte, depth_t ply){
     return false;
 }
 
-void ttStruct::addToTT(ttKey_t zhash, score_t score, score_t staticEval, move_t bestMove, depth_t depth, depth_t ply, ttFlagAge_t bound, bool pvNode){
+void ttStruct::addToTT(TTKey zhash, Score score, Score staticEval, Move bestMove, Depth depth, Depth ply, TTboundAge bound, bool pvNode){
     ttEntry *bucket = &table[(zhash & maskMod)].dat[0];
     int replace = 0;
     

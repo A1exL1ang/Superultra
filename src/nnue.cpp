@@ -6,12 +6,12 @@
 
 INCBIN(nnueNet, "nnueweights.bin");
 
-alignas(32) static nnueWeight_t W1[inputHalf * hiddenHalf];
-alignas(32) static nnueWeight_t B1[hiddenHalf];
-alignas(32) static nnueWeight_t W2[hiddenHalf * 2];
-alignas(32) static nnueWeight_t B2;
+alignas(32) static NNUEWeight W1[inputHalf * hiddenHalf];
+alignas(32) static NNUEWeight B1[hiddenHalf];
+alignas(32) static NNUEWeight W2[hiddenHalf * 2];
+alignas(32) static NNUEWeight B2;
 
-void neuralNetwork::addFeature(piece_t pieceType, square_t sq, color_t col, square_t wking, square_t bking){
+void neuralNetwork::addFeature(Piece pieceType, Square sq, Color col, Square wking, Square bking){
     const int whitePerspIdx = getInputIndex(pieceType, col, sq, white, wking) * hiddenHalf;
     const int blackPerspIdx = getInputIndex(pieceType, col, sq, black, bking) * hiddenHalf;
     
@@ -39,7 +39,7 @@ void neuralNetwork::addFeature(piece_t pieceType, square_t sq, color_t col, squa
 #endif
 }
 
-void neuralNetwork::removeFeature(piece_t pieceType, square_t sq, color_t col, square_t wking, square_t bking){
+void neuralNetwork::removeFeature(Piece pieceType, Square sq, Color col, Square wking, Square bking){
     int whitePerspIdx = getInputIndex(pieceType, col, sq, white, wking) * hiddenHalf;
     int blackPerspIdx = getInputIndex(pieceType, col, sq, black, bking) * hiddenHalf;
 
@@ -67,7 +67,7 @@ void neuralNetwork::removeFeature(piece_t pieceType, square_t sq, color_t col, s
 #endif
 }
 
-void neuralNetwork::updateMove(piece_t pieceType, square_t st, square_t en, color_t col, square_t wking, square_t bking){
+void neuralNetwork::updateMove(Piece pieceType, Square st, Square en, Color col, Square wking, Square bking){
     int whitePerspStIdx = getInputIndex(pieceType, col, st, white, wking) * hiddenHalf;
     int blackPerspEnIdx = getInputIndex(pieceType, col, en, black, bking) * hiddenHalf;
 
@@ -100,7 +100,7 @@ void neuralNetwork::updateMove(piece_t pieceType, square_t st, square_t en, colo
 #endif
 }
 
-void neuralNetwork::refresh(piece_t *board, square_t wking, square_t bking){
+void neuralNetwork::refresh(Piece *board, Square wking, Square bking){
     // Our first step is to init with biases
 #if defined(__AVX__) || defined(__AVX2__)
     const auto vectorAccumTopPtr = reinterpret_cast<__m256i*>(&accum[0]);
@@ -122,14 +122,14 @@ void neuralNetwork::refresh(piece_t *board, square_t wking, square_t bking){
     }
 #endif
     // Iterate over pieces and add them
-    for (square_t sq = 0; sq < 64; sq++){
+    for (Square sq = 0; sq < 64; sq++){
         if (board[sq] != noPiece){
             addFeature(getPieceType(board[sq]), sq, getPieceColor(board[sq]), wking, bking);
         }
     }
 }
 
-score_t neuralNetwork::eval(color_t col){
+Score neuralNetwork::eval(Color col){
     int topIdx = (col == white ? 0 : hiddenHalf);
     int botIdx = (col == white ? hiddenHalf : 0);
     int eval = B2;
@@ -186,24 +186,24 @@ score_t neuralNetwork::eval(color_t col){
 #endif
     // Undo quantization and eval scale
     eval = ((eval * evalScale) / (Q1 * Q2));
-    return static_cast<score_t>(eval);
+    return static_cast<Score>(eval);
 }
 
 void initNNUEWeights(){
     int idx = 0;
 
     // W1
-    memcpy(W1, gnnueNetData + idx, inputHalf * hiddenHalf * sizeof(nnueWeight_t));
-    idx += inputHalf * hiddenHalf * sizeof(nnueWeight_t);
+    memcpy(W1, gnnueNetData + idx, inputHalf * hiddenHalf * sizeof(NNUEWeight));
+    idx += inputHalf * hiddenHalf * sizeof(NNUEWeight);
 
     // B1
-    memcpy(B1, gnnueNetData + idx, hiddenHalf * sizeof(nnueWeight_t));
-    idx += hiddenHalf * sizeof(nnueWeight_t);
+    memcpy(B1, gnnueNetData + idx, hiddenHalf * sizeof(NNUEWeight));
+    idx += hiddenHalf * sizeof(NNUEWeight);
 
     // W2
-    memcpy(W2, gnnueNetData + idx, hiddenHalf * sizeof(nnueWeight_t) * 2);
-    idx += hiddenHalf * sizeof(nnueWeight_t) * 2;
+    memcpy(W2, gnnueNetData + idx, hiddenHalf * sizeof(NNUEWeight) * 2);
+    idx += hiddenHalf * sizeof(NNUEWeight) * 2;
     
     // B2
-    memcpy(&B2, gnnueNetData + idx, sizeof(nnueWeight_t)); 
+    memcpy(&B2, gnnueNetData + idx, sizeof(NNUEWeight)); 
 }

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include "types.h"
 #include "helpers.h"
@@ -5,15 +7,13 @@
 #include "nnue.h"
 #include "attacks.h"
 
-#pragma once
-
 struct boardState{
-    piece_t prevMoveCaptPieceType;
-    move_t prevMove;
+    Piece moveCaptType;
+    Move move;
 
     int8 castleRights; 
-    file_t epFile;
-    ttKey_t zhash;
+    File epFile;
+    TTKey zhash;
     
     int halfMoveClock;
     int moveCount;
@@ -28,17 +28,17 @@ public:
     void genAllMoves(bool noisy, moveList &moves);
 
     // Move make/unmake
-    void makeMove(move_t move);
+    void makeMove(Move move);
     void undoLastMove();
     void makeNullMove();
     void undoNullMove();
     
     // Eval related
-    bool seeGreater(move_t move, score_t value);
-    bool drawByRepetition(depth_t searchPly);
+    bool seeGreater(Move move, Score value);
+    bool drawByRepetition(Depth searchPly);
     bool drawByInsufficientMaterial();
     bool drawByFiftyMoveRule();
-    score_t eval();
+    Score eval();
 
     // Fen and debug related
     void readFen(std::string fen);
@@ -46,35 +46,35 @@ public:
     void resetStack();
 
     // Interface and utility access
-    inline color_t getTurn(){
+    inline Color getTurn(){
         return turn;
     }
-    inline bitboard_t pieceAt(square_t sq){
+    inline Bitboard pieceAt(Square sq){
         return board[sq];
     }
-    inline bitboard_t allPiece(piece_t piece){
+    inline Bitboard allPiece(Piece piece){
         return pieceBB[piece][black] | pieceBB[piece][white];
     }
-    inline square_t kingSq(color_t col){
+    inline Square kingSq(Color col){
         return lsb(pieceBB[king][col]);
     }
-    inline ttKey_t getHash(){
+    inline TTKey getHash(){
         return pos[stk].zhash;
     }
-    inline bitboard_t allAttack(color_t col){
-        bitboard_t attacked = 0;
+    inline Bitboard allAttack(Color col){
+        Bitboard attacked = 0;
         attacked |= pawnsAllAttack(pieceBB[pawn][col], col) | kingAttack(kingSq(col));
 
-        for (bitboard_t m = pieceBB[knight][col]; m;){
+        for (Bitboard m = pieceBB[knight][col]; m;){
             attacked |= knightAttack(poplsb(m));
         }
-        for (bitboard_t m = pieceBB[bishop][col]; m;){
+        for (Bitboard m = pieceBB[bishop][col]; m;){
             attacked |= bishopAttack(poplsb(m), allBB);
         }
-        for (bitboard_t m = pieceBB[rook][col]; m;){
+        for (Bitboard m = pieceBB[rook][col]; m;){
             attacked |= rookAttack(poplsb(m), allBB);
         }
-        for (bitboard_t m = pieceBB[queen][col]; m;){
+        for (Bitboard m = pieceBB[queen][col]; m;){
             attacked |= queenAttack(poplsb(m), allBB);
         }
         return attacked;
@@ -82,21 +82,21 @@ public:
     inline bool inCheck(){
         return (allAttack(!turn) & pieceBB[king][turn]);
     }
-    inline piece_t movePieceEnc(move_t move){
+    inline Piece movePieceEnc(Move move){
         return board[moveFrom(move)];
     }
-    inline piece_t movePieceType(move_t move){
+    inline Piece movePieceType(Move move){
         return getPieceType(board[moveFrom(move)]);
     }
-    inline piece_t moveCaptType(move_t move){
+    inline Piece moveCaptType(Move move){
         return isEP(move) ? pawn : getPieceType(board[moveTo(move)]);
     }
-    inline bool isEP(move_t move){
+    inline bool isEP(Move move){
         return getPieceType(board[moveFrom(move)]) == pawn 
                and getFile(moveFrom(move)) != getFile(moveTo(move))
                and board[moveTo(move)] == noPiece;
     }
-    inline bool hasMajorPieceLeft(color_t col){
+    inline bool hasMajorPieceLeft(Color col){
         return (pieceBB[knight][col] | pieceBB[bishop][col] | pieceBB[rook][col] | pieceBB[queen][col]);
     }
 
@@ -107,25 +107,25 @@ private:
     int stk;
 
     // Board variables
-    piece_t board[64];
-    bitboard_t pieceBB[7][2];
-    bitboard_t colorBB[2];
-    bitboard_t allBB;
-    color_t turn;
+    Piece board[64];
+    Bitboard pieceBB[7][2];
+    Bitboard colorBB[2];
+    Bitboard allBB;
+    Color turn;
 
     // Move gen helpers
-    void calcPins(bitboard_t &pinHV, bitboard_t &pinDA);
-    void calcAttacks(bitboard_t &attacked, bitboard_t &okSq);
+    void calcPins(Bitboard &pinHV, Bitboard &pinDA);
+    void calcAttacks(Bitboard &attacked, Bitboard &okSq);
 
-    void genPawnMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitboard_t okSq, moveList &moves);
-    void genKnightMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitboard_t okSq, moveList &moves);
-    void genBishopMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitboard_t okSq, moveList &moves);
-    void genRookMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitboard_t okSq, moveList &moves);
-    void genQueenMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitboard_t okSq, moveList &moves);
-    void genKingMoves(bool noisy, bitboard_t attacked, moveList &moves);
+    void genPawnMoves(bool noisy, Bitboard pinHV, Bitboard pinDA, Bitboard okSq, moveList &moves);
+    void genKnightMoves(bool noisy, Bitboard pinHV, Bitboard pinDA, Bitboard okSq, moveList &moves);
+    void genBishopMoves(bool noisy, Bitboard pinHV, Bitboard pinDA, Bitboard okSq, moveList &moves);
+    void genRookMoves(bool noisy, Bitboard pinHV, Bitboard pinDA, Bitboard okSq, moveList &moves);
+    void genQueenMoves(bool noisy, Bitboard pinHV, Bitboard pinDA, Bitboard okSq, moveList &moves);
+    void genKingMoves(bool noisy, Bitboard attacked, moveList &moves);
     
     // Make and unmake helpers
-    void addPiece(piece_t pieceType, square_t sq, color_t col, bool updateAccum);
-    void removePiece(square_t sq, bool updateAccum);
-    void movePiece(piece_t pieceType, square_t st, square_t en, color_t col, bool updateAccum);
+    void addPiece(Piece pieceType, Square sq, Color col, bool updateAccum);
+    void removePiece(Square sq, bool updateAccum);
+    void movePiece(Piece pieceType, Square st, Square en, Color col, bool updateAccum);
 };

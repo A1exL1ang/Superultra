@@ -4,9 +4,10 @@
 #include "types.h"
 #include "tt.h"
 
-void position::addPiece(piece_t pieceType, square_t sq, color_t col, bool updateAccum){
+void position::addPiece(Piece pieceType, Square sq, Color col, bool updateAccum){
     // Assumes position is empty
     assert(!board[sq]);
+
     pieceBB[pieceType][col] ^= (1ULL << sq);
     colorBB[col] ^= (1ULL << sq);
     allBB ^= (1ULL << sq);
@@ -18,11 +19,12 @@ void position::addPiece(piece_t pieceType, square_t sq, color_t col, bool update
     }
 }
 
-void position::removePiece(square_t sq, bool updateAccum){
+void position::removePiece(Square sq, bool updateAccum){
     // Assumes there's is a piece at sq
     assert(board[sq]);
-    piece_t pieceType = getPieceType(board[sq]);
-    color_t col = getPieceColor(board[sq]);
+
+    Piece pieceType = getPieceType(board[sq]);
+    Color col = getPieceColor(board[sq]);
 
     pieceBB[pieceType][col] ^= (1ULL << sq);
     colorBB[col] ^= (1ULL << sq);
@@ -35,9 +37,10 @@ void position::removePiece(square_t sq, bool updateAccum){
     }
 }
 
-void position::movePiece(piece_t piece, square_t st, square_t en, color_t col, bool updateAccum){
+void position::movePiece(Piece piece, Square st, Square en, Color col, bool updateAccum){
     // Assumes there's a piece at st and no piece at en
     assert(board[st] and !board[en]);
+
     pieceBB[piece][col] ^= (1ULL << st) ^ (1ULL << en);
     colorBB[col] ^= (1ULL << st) ^ (1ULL << en);
     allBB ^= (1ULL << st) ^ (1ULL << en);
@@ -50,19 +53,20 @@ void position::movePiece(piece_t piece, square_t st, square_t en, color_t col, b
     }
 }
 
-void position::makeMove(move_t move){
+void position::makeMove(Move move){
     // Step 1) Decode and get necessary info
-    square_t st = moveFrom(move);
-    square_t en = moveTo(move);
-    piece_t promo = movePromo(move);
-    piece_t pieceType = getPieceType(board[st]);
+    Square st = moveFrom(move);
+    Square en = moveTo(move);
+    Piece promo = movePromo(move);
+    Piece pieceType = getPieceType(board[st]);
+    Piece captType = getPieceType(board[en]);
     bool refresh = (pieceType == king and kingBucketId[turn == white ? st : flip(st)] != kingBucketId[turn == white ? en : flip(en)]);
 
-    // Step 2) Update next stack
+    // Step 2) Update stack (move + capt is logged in stack i and we copy board info to stack i + 1)
     stk++;
 
-    pos[stk].prevMoveCaptPieceType = (board[en] >> 1);
-    pos[stk].prevMove = move;
+    pos[stk - 1].moveCaptType = captType;
+    pos[stk - 1].move = move;
 
     pos[stk].castleRights = pos[stk - 1].castleRights;
     pos[stk].epFile = pos[stk - 1].epFile;
@@ -75,14 +79,14 @@ void position::makeMove(move_t move){
 
     // Step 3) En passant
     if (isEP(move)){ 
-        square_t enemyPawnSq = (turn == white ? en - 8 : en + 8);
+        Square enemyPawnSq = (turn == white ? en - 8 : en + 8);
         movePiece(pawn, st, en, turn, !refresh);
         removePiece(enemyPawnSq, !refresh);
     }
 
     // Step 4) Promotion
     else if (promo){
-        if (pos[stk].prevMoveCaptPieceType){
+        if (captType != noPiece){
             removePiece(en, !refresh);
         }
         removePiece(st, !refresh);
@@ -91,8 +95,8 @@ void position::makeMove(move_t move){
 
     // Step 5) Castle
     else if (pieceType == king and abs(getFile(st) - getFile(en)) == 2){
-        square_t stRook;
-        square_t enRook;
+        Square stRook;
+        Square enRook;
         
         // Kingside
         if (st < en){ 
@@ -110,14 +114,14 @@ void position::makeMove(move_t move){
 
     // Step 6) All other moves
     else{
-        if (pos[stk].prevMoveCaptPieceType){
+        if (captType != noPiece){
             removePiece(en, !refresh);
         }
         movePiece(pieceType, st, en, turn, !refresh);
     }
 
     // Step 7) Clock
-    pos[stk].halfMoveClock = (pos[stk].prevMoveCaptPieceType or pieceType == pawn) ? 0 : pos[stk].halfMoveClock + 1;
+    pos[stk].halfMoveClock = (captType != noPiece or pieceType == pawn) ? 0 : pos[stk].halfMoveClock + 1;
     pos[stk].moveCount++;
 
     // Step 8a) Clear zhash of ep and castle rights so we can fold everything into it afterwards
@@ -154,15 +158,16 @@ void position::undoLastMove(){
     turn ^= 1;
 
     // Step 2) Decode and get info
-    move_t move = pos[stk].prevMove;
-    square_t st = moveFrom(move);
-    square_t en = moveTo(move);
-    piece_t promo = movePromo(move);
-    piece_t pieceType = getPieceType(board[en]);
+    Move move = pos[stk - 1].move;
+    Square st = moveFrom(move);
+    Square en = moveTo(move);
+    Piece promo = movePromo(move);
+    Piece pieceType = getPieceType(board[en]);
+    Piece captType = pos[stk - 1].moveCaptType;
 
     // Step 3) En passant (note isEP won't work since we are working backwards)
-    if (pieceType == pawn and getFile(st) != getFile(en) and !pos[stk].prevMoveCaptPieceType){
-        square_t captSq = (turn == white ? en - 8 : en + 8);
+    if (pieceType == pawn and getFile(st) != getFile(en) and captType == noPiece){
+        Square captSq = (turn == white ? en - 8 : en + 8);
         movePiece(pawn, en, st, turn, false);
         addPiece(pawn, captSq, !turn, false);
     }
@@ -171,14 +176,14 @@ void position::undoLastMove(){
     else if (promo){
         removePiece(en, false);
         addPiece(pawn, st, turn, false);
-        if (pos[stk].prevMoveCaptPieceType){
-            addPiece(pos[stk].prevMoveCaptPieceType, en, !turn, false);
+        if (captType != noPiece){
+            addPiece(captType, en, !turn, false);
         }
     }
 
     // Step 5) Castle
     else if (pieceType == king and abs(getFile(st) - getFile(en)) == 2){
-        square_t stRook, enRook;
+        Square stRook, enRook;
         
         if (st < en){ // Kingside
             stRook = (turn == white ? h1 : h8); 
@@ -195,8 +200,8 @@ void position::undoLastMove(){
     // Step 6) All other moves
     else{
         movePiece(pieceType, en, st, turn, false);
-        if (pos[stk].prevMoveCaptPieceType){
-            addPiece(pos[stk].prevMoveCaptPieceType, en, !turn, false);
+        if (captType){
+            addPiece(captType, en, !turn, false);
         }
     }
 
@@ -207,9 +212,10 @@ void position::undoLastMove(){
 void position::makeNullMove(){
     // Update all the stack stuff
     stk++;
-    pos[stk].prevMoveCaptPieceType = noPiece;
-    pos[stk].prevMove = nullOrNoMove;
 
+    pos[stk - 1].move = nullOrNoMove;
+    pos[stk - 1].moveCaptType = noPiece;
+    
     pos[stk].castleRights = pos[stk - 1].castleRights;
     pos[stk].epFile = noEP;
 

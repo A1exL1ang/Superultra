@@ -1,18 +1,18 @@
+#pragma once
+
 #include "types.h"
 #include "helpers.h"
 
-#pragma once
-
 struct moveInfo{
-    move_t move;
-    movescore_t score;
+    Move move;
+    Movescore score;
 };
 
 struct moveList{
     int sz = 0;
     moveInfo moves[maxMovesInTurn];
 
-    inline void addMove(move_t move){
+    inline void addMove(Move move){
         moves[sz++].move = move;
     }
     inline void bringBest(int start){
@@ -28,21 +28,21 @@ struct moveList{
 };
 
 // Bits [0 ... 5] Start
-inline square_t moveFrom(move_t move){
+inline Square moveFrom(Move move){
     return (move & 63);
 }
 
 // Bits [6 ... 11] End
-inline square_t moveTo(move_t move){
+inline Square moveTo(Move move){
     return ((move >> 6) & 63);
 }
 
 // Bits [12 ... 14] Promo
-inline piece_t movePromo(move_t move){
+inline Piece movePromo(Move move){
     return ((move >> 12) & 7);
 }
 
 // Encode based on the above encoding
-inline move_t encodeMove(square_t st, square_t en, square_t promo){
-    return st + (static_cast<move_t>(en) << 6) + (static_cast<move_t>(promo) << 12);
+inline Move encodeMove(Square st, Square en, Square promo){
+    return st + (static_cast<Move>(en) << 6) + (static_cast<Move>(promo) << 12);
 }

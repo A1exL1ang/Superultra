@@ -1,8 +1,8 @@
+#pragma once
+
 #include <string>
 #include <vector>
 #include "types.h"
-
-#pragma once
 
 // Global number of threads
 extern int threadCount;
@@ -17,11 +17,11 @@ struct uciSearchLims{
 };
 
 // UCI conversion functions and other utility functions
-char pieceToChar(piece_t p);
-piece_t charToPiece(char c);
-std::string squareToString(square_t sq);
-std::string moveToString(move_t move);
-move_t stringToMove(std::string move);
+char pieceToChar(Piece p);
+Piece charToPiece(char c);
+std::string squareToString(Square sq);
+std::string moveToString(Move move);
+Move stringToMove(std::string move);
 
 // UCI driver
 void doLoop();

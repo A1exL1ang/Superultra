@@ -1,25 +1,25 @@
+#pragma once
+
 #include "board.h"
 #include "tt.h"
 #include "helpers.h"
 #include "types.h"
 #include "uci.h"
 
-#pragma once
-
 struct searchStack{
-    score_t staticEval;
-    move_t excludedMove;
-    move_t move;
+    Score staticEval;
+    Move excludedMove;
+    Move move;
     int dextension;
     
-    move_t *counter;
-    movescore_t (*contHist)[14][64];
+    Move *counter;
+    Movescore (*contHist)[14][64];
 };
 
 struct searchResultData{
-    depth_t depthSearched;
-    depth_t selDepth;
-    score_t score;
+    Depth depthSearched;
+    Depth selDepth;
+    Score score;
     std::vector<std::string> pvMoves; 
 };
 
@@ -27,17 +27,17 @@ struct searchData{
     int threadId;
     bool stopped;
 
-    depth_t selDepth;
+    Depth selDepth;
     searchResultData result;
     
-    move_t pvTable[maximumPly + 5][maximumPly + 5];
-    depth_t pvLength[maximumPly + 5];
+    Move pvTable[maximumPly + 5][maximumPly + 5];
+    Depth pvLength[maximumPly + 5];
     
-    move_t killers[maximumPly + 5][2];
-    move_t counter[14][64];
+    Move killers[maximumPly + 5][2];
+    Move counter[14][64];
 
-    movescore_t history[2][64][64];
-    movescore_t contHist[2][14][64][14][64];
+    Movescore history[2][64][64];
+    Movescore contHist[2][14][64][14][64];
 
     uint64 nodes;
     uint64 moveNodeStat[64][64];

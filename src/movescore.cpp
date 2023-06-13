@@ -4,7 +4,7 @@
 #include "search.h"
 #include "movescore.h"
 
-const static movescore_t mvvlva[7][7] = {
+const static Movescore mvvlva[7][7] = {
     {},                                      // Victim: None
     {0, 2050, 2040, 2030, 2020, 2010, 2000}, // Victim: Pawn
     {0, 3050, 3040, 3030, 3020, 3010, 3000}, // Victim: Knight
@@ -14,31 +14,31 @@ const static movescore_t mvvlva[7][7] = {
     {}                                       // Victim: King
 };
 
-const static movescore_t maximumHist = 16384;
+const static Movescore maximumHist = 16384;
 
-const static movescore_t ttMoveScore            = 2000000000;
-const static movescore_t promoScore             = 1900000000;
-const static movescore_t goodCaptScore          = 1800000000;
-const static movescore_t primaryKillerScore     = 1700000000;
-const static movescore_t secondaryKillerScore   = 1600000000;
-const static movescore_t counterScore           = 1500000000;
-const static movescore_t nonspecialMoveScore    = 1400000000;
-const static movescore_t badCaptScore           = 1300000000;
+const static Movescore ttMoveScore            = 2000000000;
+const static Movescore promoScore             = 1900000000;
+const static Movescore goodCaptScore          = 1800000000;
+const static Movescore primaryKillerScore     = 1700000000;
+const static Movescore secondaryKillerScore   = 1600000000;
+const static Movescore counterScore           = 1500000000;
+const static Movescore nonspecialMoveScore    = 1400000000;
+const static Movescore badCaptScore           = 1300000000;
 
-const static movescore_t promoScoreBonus[7] = { 0, 0, 1, 2, 3, 4, 0 };
+const static Movescore promoScoreBonus[7] = { 0, 0, 1, 2, 3, 4, 0 };
 
-static inline void updateHistoryValue(movescore_t &cur, movescore_t bonus){
+static inline void updateHistoryValue(Movescore &cur, Movescore bonus){
     // We use history gravity which means we scale based on its current magnitude
     // new bonus = bonus * (1 - |value| / max value)
     cur += bonus - static_cast<uint64>(abs(bonus)) * static_cast<uint64>(cur) / maximumHist;
 }
 
-static inline movescore_t calcBonus(depth_t depth){
+static inline Movescore calcBonus(Depth depth){
     return std::min(8 * depth * depth + 32 * std::max(depth - 1, 0), 1200);
 }
 
-movescore_t getQuietHistory(move_t move, depth_t ply, position &board, searchData &sd, searchStack *ss){
-    movescore_t score = 0;
+Movescore getQuietHistory(Move move, Depth ply, position &board, searchData &sd, searchStack *ss){
+    Movescore score = 0;
 
     score += sd.history[board.getTurn()][moveFrom(move)][moveTo(move)];
     
@@ -51,7 +51,7 @@ movescore_t getQuietHistory(move_t move, depth_t ply, position &board, searchDat
     return score;
 }
 
-void updateAllHistory(move_t bestMove, moveList &quiets, depth_t depth, depth_t ply, position &board, searchData &sd, searchStack *ss){
+void updateAllHistory(Move bestMove, moveList &quiets, Depth depth, Depth ply, position &board, searchData &sd, searchStack *ss){
     // Set killer
     if (bestMove != sd.killers[ply][0]){
         sd.killers[ply][1] = sd.killers[ply][0];
@@ -63,8 +63,8 @@ void updateAllHistory(move_t bestMove, moveList &quiets, depth_t depth, depth_t 
     }
     // Update history values by penalizing failing moves and incrementing best move
     for (int i = 0; i < quiets.sz; i++){
-        move_t move = quiets.moves[i].move;
-        movescore_t bonus = calcBonus(depth) * (move == bestMove ? 1 : -1);
+        Move move = quiets.moves[i].move;
+        Movescore bonus = calcBonus(depth) * (move == bestMove ? 1 : -1);
             
         updateHistoryValue(sd.history[board.getTurn()][moveFrom(move)][moveTo(move)], bonus);
 
@@ -77,11 +77,11 @@ void updateAllHistory(move_t bestMove, moveList &quiets, depth_t depth, depth_t 
     }   
 }
 
-void scoreMoves(moveList &moves, move_t ttMove, depth_t ply, position &board, searchData &sd, searchStack *ss){
+void scoreMoves(moveList &moves, Move ttMove, Depth ply, position &board, searchData &sd, searchStack *ss){
     for (int i = 0; i < moves.sz; i++){
         // Step 0) Variables
-        move_t move = moves.moves[i].move;
-        movescore_t &score = moves.moves[i].score;
+        Move move = moves.moves[i].move;
+        Movescore &score = moves.moves[i].score;
 
         // Step 1) ttMove
         if (move == ttMove){

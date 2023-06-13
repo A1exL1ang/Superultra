@@ -15,5 +15,26 @@ int main(){
     threadCount = 1;
 
     // Begin the UCI Loop
-    doLoop();
+    // doLoop();
+
+    /*
+    CHANGES:
+    QS Eval snapping: abs(tte.score) < foundMate
+    
+    */
+
+    position board;
+
+    
+    threadCount = 1;
+    board.readFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+    uciSearchLims lims;
+    lims.movesToGo = 1;
+    lims.timeLeft[board.getTurn()] = 10000;
+
+    beginSearch(board, lims);
 }
+/*
+
+*/

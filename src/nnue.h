@@ -1,11 +1,11 @@
+#pragma once
+
 #include <algorithm>
 #include <array>
 #include <vector>
 #include "assert.h"
 #include "types.h"
 #include "helpers.h"
-
-#pragma once
 
 const int kingBucketCount = 6;
 const int singleKingBucketSize = 768;
@@ -17,8 +17,8 @@ const int evalScale = 400;
 const int Q1 = 255;
 const int Q2 = 64;
 
-const nnueWeight_t creluL = 0;
-const nnueWeight_t creluR = Q1;
+const NNUEWeight creluL = 0;
+const NNUEWeight creluR = Q1;
 
 const int kingBucketId[64] = {
     0, 0, 1, 1, 2, 2, 3, 3,
@@ -32,16 +32,16 @@ const int kingBucketId[64] = {
 };
 
 struct neuralNetwork{    
-    alignas(32) std::array<nnueWeight_t, hiddenHalf * 2> accum;
+    alignas(32) std::array<NNUEWeight, hiddenHalf * 2> accum;
 
-    void addFeature(piece_t pieceType, square_t sq, color_t col, square_t wking, square_t bking);
-    void removeFeature(piece_t pieceType, square_t sq, color_t col, square_t wking, square_t bking);
-    void updateMove(piece_t pieceType, square_t st, square_t en, color_t col, square_t wking, square_t bking);
-    void refresh(piece_t *board, square_t wking, square_t bking);
-    score_t eval(color_t col);
+    void addFeature(Piece pieceType, Square sq, Color col, Square wking, Square bking);
+    void removeFeature(Piece pieceType, Square sq, Color col, Square wking, Square bking);
+    void updateMove(Piece pieceType, Square st, Square en, Color col, Square wking, Square bking);
+    void refresh(Piece *board, Square wking, Square bking);
+    Score eval(Color col);
 };
 
-inline int getInputIndex(piece_t pieceType, color_t col, square_t sq, color_t perspective, square_t kingPos){
+inline int getInputIndex(Piece pieceType, Color col, Square sq, Color perspective, Square kingPos){
     return (col == perspective ? 0 : 384) 
            + 64 * (pieceType - 1) 
            + (perspective == white ? sq : flip(sq))

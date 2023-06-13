@@ -2,15 +2,15 @@
 #include "movepick.h"
 #include "attacks.h"
 
-void position::calcPins(bitboard_t &pinHV, bitboard_t &pinDA){
+void position::calcPins(Bitboard &pinHV, Bitboard &pinDA){
     // Diagonal
-    bitboard_t maskDA = ((pieceBB[bishop][!turn] | pieceBB[queen][!turn]) & bishopAttack(kingSq(turn), colorBB[!turn]));
+    Bitboard maskDA = ((pieceBB[bishop][!turn] | pieceBB[queen][!turn]) & bishopAttack(kingSq(turn), colorBB[!turn]));
     
     while (maskDA){
-        square_t sq = poplsb(maskDA);
+        Square sq = poplsb(maskDA);
 
         // Path to king (exclusive of both endpoints) 
-        bitboard_t toKing = between(sq, kingSq(turn)) ^ pieceBB[king][turn] ^ (1ULL << sq); 
+        Bitboard toKing = between(sq, kingSq(turn)) ^ pieceBB[king][turn] ^ (1ULL << sq); 
 
         // Check if they pin us
         if (countOnes(toKing & colorBB[turn]) == 1){
@@ -19,13 +19,13 @@ void position::calcPins(bitboard_t &pinHV, bitboard_t &pinDA){
     }
 
     // Horizontal
-    bitboard_t maskHV = ((pieceBB[rook][!turn] | pieceBB[queen][!turn]) & rookAttack(kingSq(turn), colorBB[!turn]));
+    Bitboard maskHV = ((pieceBB[rook][!turn] | pieceBB[queen][!turn]) & rookAttack(kingSq(turn), colorBB[!turn]));
 
     while (maskHV){
-        square_t sq = poplsb(maskHV);
+        Square sq = poplsb(maskHV);
 
         // Path to king (exclusive of both endpoints) 
-        bitboard_t toKing = between(sq, kingSq(turn)) ^ pieceBB[king][turn] ^ (1ULL << sq); 
+        Bitboard toKing = between(sq, kingSq(turn)) ^ pieceBB[king][turn] ^ (1ULL << sq); 
 
         // Check if they pin us
         if (countOnes(toKing & colorBB[turn]) == 1){
@@ -34,9 +34,9 @@ void position::calcPins(bitboard_t &pinHV, bitboard_t &pinDA){
     }
 }
 
-void position::calcAttacks(bitboard_t &attacked, bitboard_t &okSq){
+void position::calcAttacks(Bitboard &attacked, Bitboard &okSq){
     // Pawns
-    bitboard_t pawnAtt = pawnsAllAttack(pieceBB[pawn][!turn], !turn);
+    Bitboard pawnAtt = pawnsAllAttack(pieceBB[pawn][!turn], !turn);
     attacked |= pawnAtt;
     
     if (pawnAtt & pieceBB[king][turn]){
@@ -44,14 +44,14 @@ void position::calcAttacks(bitboard_t &attacked, bitboard_t &okSq){
     }
 
     // King
-    bitboard_t kingAtt = kingAttack(lsb(pieceBB[king][!turn]));
+    Bitboard kingAtt = kingAttack(lsb(pieceBB[king][!turn]));
     attacked |= kingAtt;
 
     // Knights
-    for (bitboard_t m = pieceBB[knight][!turn]; m;){
-        square_t sq = poplsb(m);
+    for (Bitboard m = pieceBB[knight][!turn]; m;){
+        Square sq = poplsb(m);
 
-        bitboard_t att = knightAttack(sq);
+        Bitboard att = knightAttack(sq);
         attacked |= att;
 
         // They hit our king
@@ -61,10 +61,10 @@ void position::calcAttacks(bitboard_t &attacked, bitboard_t &okSq){
     }
 
     // Bishops
-    for (bitboard_t m = pieceBB[bishop][!turn]; m;){
-        square_t sq = poplsb(m);
+    for (Bitboard m = pieceBB[bishop][!turn]; m;){
+        Square sq = poplsb(m);
 
-        bitboard_t att = bishopAttack(sq, allBB ^ pieceBB[king][turn]);
+        Bitboard att = bishopAttack(sq, allBB ^ pieceBB[king][turn]);
         attacked |= att;
         
         // They hit our king
@@ -74,10 +74,10 @@ void position::calcAttacks(bitboard_t &attacked, bitboard_t &okSq){
     }
 
     // Rooks
-    for (bitboard_t m = pieceBB[rook][!turn]; m;){
-        square_t sq = poplsb(m);
+    for (Bitboard m = pieceBB[rook][!turn]; m;){
+        Square sq = poplsb(m);
 
-        bitboard_t att = rookAttack(sq, allBB ^ pieceBB[king][turn]);
+        Bitboard att = rookAttack(sq, allBB ^ pieceBB[king][turn]);
         attacked |= att;
 
         // They hit our king
@@ -87,10 +87,10 @@ void position::calcAttacks(bitboard_t &attacked, bitboard_t &okSq){
     }
 
     // Queens
-    for (bitboard_t m = pieceBB[queen][!turn]; m;){
-        square_t sq = poplsb(m);
+    for (Bitboard m = pieceBB[queen][!turn]; m;){
+        Square sq = poplsb(m);
 
-        bitboard_t att = queenAttack(sq, allBB ^ pieceBB[king][turn]);
+        Bitboard att = queenAttack(sq, allBB ^ pieceBB[king][turn]);
         attacked |= att;
 
         // They hit our king
@@ -100,33 +100,33 @@ void position::calcAttacks(bitboard_t &attacked, bitboard_t &okSq){
     }
 }
 
-void position::genPawnMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitboard_t okSq, moveList &moves){
+void position::genPawnMoves(bool noisy, Bitboard pinHV, Bitboard pinDA, Bitboard okSq, moveList &moves){
     // Ranks relative to stm
-    bitboard_t rank3 = allInRank[turn == white ? 2 : 5];
-    bitboard_t rank8 = allInRank[turn == white ? 7 : 0];
+    Bitboard rank3 = allInRank[turn == white ? 2 : 5];
+    Bitboard rank8 = allInRank[turn == white ? 7 : 0];
 
     // Pinned pawns
-    bitboard_t pawnNotPinned = (pieceBB[pawn][turn] & (~pinHV) & (~pinDA));
-    bitboard_t pawnPinnedDA = (pieceBB[pawn][turn] & pinDA);
-    bitboard_t pawnPinnedHV = (pieceBB[pawn][turn] & pinHV);
+    Bitboard pawnNotPinned = (pieceBB[pawn][turn] & (~pinHV) & (~pinDA));
+    Bitboard pawnPinnedDA = (pieceBB[pawn][turn] & pinDA);
+    Bitboard pawnPinnedHV = (pieceBB[pawn][turn] & pinHV);
 
     // Directional captures. Either the pawn is not pinned at all or is diagonally 
     // pinned. If it is the latter, then the pawn can only capture in one direction
-    bitboard_t pawnCaptLeftEnd = (pawnsLeftAttack(pawnNotPinned, turn) | (pawnsLeftAttack(pawnPinnedDA, turn) & pinDA));
-    bitboard_t pawnCaptRightEnd = (pawnsRightAttack(pawnNotPinned, turn) | (pawnsRightAttack(pawnPinnedDA, turn) & pinDA));
+    Bitboard pawnCaptLeftEnd = (pawnsLeftAttack(pawnNotPinned, turn) | (pawnsLeftAttack(pawnPinnedDA, turn) & pinDA));
+    Bitboard pawnCaptRightEnd = (pawnsRightAttack(pawnNotPinned, turn) | (pawnsRightAttack(pawnPinnedDA, turn) & pinDA));
     pawnCaptLeftEnd &= (colorBB[!turn] & okSq);
     pawnCaptRightEnd &= (colorBB[!turn] & okSq);
 
     // Pawn pushes. Either the pawn is not pinned at all or is vertically pinned
-    bitboard_t pawnPushEnd = (pawnsUp(pawnNotPinned, turn) | (pawnsUp(pawnPinnedHV, turn) & pinHV));
-    bitboard_t pawnDoublePushEnd = pawnsUp(((pawnPushEnd & (~allBB)) & rank3), turn);
+    Bitboard pawnPushEnd = (pawnsUp(pawnNotPinned, turn) | (pawnsUp(pawnPinnedHV, turn) & pinHV));
+    Bitboard pawnDoublePushEnd = pawnsUp(((pawnPushEnd & (~allBB)) & rank3), turn);
     pawnPushEnd &= (okSq & (~allBB));
     pawnDoublePushEnd &= (okSq & (~allBB));
 
     // Add left captures
     while (pawnCaptLeftEnd){
-        square_t en = poplsb(pawnCaptLeftEnd);
-        square_t st = (turn == white ? en - 7 : en + 9);
+        Square en = poplsb(pawnCaptLeftEnd);
+        Square st = (turn == white ? en - 7 : en + 9);
 
         if ((1ULL << en) & rank8){
             moves.addMove(encodeMove(st, en, queen));
@@ -141,8 +141,8 @@ void position::genPawnMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitb
     
     // Add right captures
     while (pawnCaptRightEnd){
-        square_t en = poplsb(pawnCaptRightEnd);
-        square_t st = (turn == white ? en - 9 : en + 7);
+        Square en = poplsb(pawnCaptRightEnd);
+        Square st = (turn == white ? en - 9 : en + 7);
 
         if ((1ULL << en) & rank8){
             moves.addMove(encodeMove(st, en, queen));
@@ -162,8 +162,8 @@ void position::genPawnMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitb
     }
 
     while (pawnPushEnd){
-        square_t en = poplsb(pawnPushEnd);
-        square_t st = (turn == white ? en - 8 : en + 8);
+        Square en = poplsb(pawnPushEnd);
+        Square st = (turn == white ? en - 8 : en + 8);
 
         if ((1ULL << en) & rank8){
             moves.addMove(encodeMove(st, en, queen));
@@ -176,20 +176,20 @@ void position::genPawnMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitb
         }
     }
     while (pawnDoublePushEnd){
-        square_t en = poplsb(pawnDoublePushEnd);
-        square_t st = (turn == white ? en - 16 : en + 16);
+        Square en = poplsb(pawnDoublePushEnd);
+        Square st = (turn == white ? en - 16 : en + 16);
         moves.addMove(encodeMove(st, en, noPiece));
     }
     
     // En passant (we can do a partial legality check which isnt costly as ep is pretty rare)
     if (pos[stk].epFile != noEP){
-        square_t epEnemyPawn = pos[stk].epFile + (turn == white ? 32 : 24);
-        square_t epDestination = pos[stk].epFile + (turn == white ? 40 : 16);
-        bitboard_t pawnCandidateEpStart = (pawnAttack(epDestination, !turn) & pieceBB[pawn][turn]);
+        Square epEnemyPawn = pos[stk].epFile + (turn == white ? 32 : 24);
+        Square epDestination = pos[stk].epFile + (turn == white ? 40 : 16);
+        Bitboard pawnCandidateEpStart = (pawnAttack(epDestination, !turn) & pieceBB[pawn][turn]);
 
         while (pawnCandidateEpStart){
-            square_t st = poplsb(pawnCandidateEpStart);
-            bitboard_t occupancyAfter = (allBB ^ (1ULL << st) ^ (1ULL << epDestination) ^ (1ULL << epEnemyPawn));
+            Square st = poplsb(pawnCandidateEpStart);
+            Bitboard occupancyAfter = (allBB ^ (1ULL << st) ^ (1ULL << epDestination) ^ (1ULL << epEnemyPawn));
             
             if (!(bishopAttack(kingSq(turn), occupancyAfter) & pieceBB[bishop][!turn])
                and !(rookAttack(kingSq(turn), occupancyAfter) & pieceBB[rook][!turn])
@@ -201,26 +201,26 @@ void position::genPawnMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitb
     }
 }
 
-void position::genKnightMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitboard_t okSq, moveList &moves){
-    for (bitboard_t m = (pieceBB[knight][turn] & (~(pinHV | pinDA))); m;){
-        square_t st = poplsb(m);
-        bitboard_t maskMoves = (knightAttack(st) & okSq);
+void position::genKnightMoves(bool noisy, Bitboard pinHV, Bitboard pinDA, Bitboard okSq, moveList &moves){
+    for (Bitboard m = (pieceBB[knight][turn] & (~(pinHV | pinDA))); m;){
+        Square st = poplsb(m);
+        Bitboard maskMoves = (knightAttack(st) & okSq);
 
         if (noisy){
             maskMoves &= colorBB[!turn];
         }
         while (maskMoves){
-            square_t en = poplsb(maskMoves);
+            Square en = poplsb(maskMoves);
             moves.addMove(encodeMove(st, en, noPiece));
         }
     }
 }
 
-void position::genBishopMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitboard_t okSq, moveList &moves){
-    for (bitboard_t m = (pieceBB[bishop][turn] & (~pinHV)); m;){
-        square_t st = poplsb(m);
+void position::genBishopMoves(bool noisy, Bitboard pinHV, Bitboard pinDA, Bitboard okSq, moveList &moves){
+    for (Bitboard m = (pieceBB[bishop][turn] & (~pinHV)); m;){
+        Square st = poplsb(m);
 
-        bitboard_t maskMoves = (bishopAttack(st, allBB) 
+        Bitboard maskMoves = (bishopAttack(st, allBB) 
                              & okSq
                              & ((pinDA & (1ULL << st)) ? pinDA : all));
 
@@ -228,17 +228,17 @@ void position::genBishopMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bi
             maskMoves &= colorBB[!turn];
         }
         while (maskMoves){
-            square_t en = poplsb(maskMoves);
+            Square en = poplsb(maskMoves);
             moves.addMove(encodeMove(st, en, noPiece));
         }
     }
 }
 
-void position::genRookMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitboard_t okSq, moveList &moves){
-    for (bitboard_t m = (pieceBB[rook][turn] & (~pinDA)); m;){
-        square_t st = poplsb(m);
+void position::genRookMoves(bool noisy, Bitboard pinHV, Bitboard pinDA, Bitboard okSq, moveList &moves){
+    for (Bitboard m = (pieceBB[rook][turn] & (~pinDA)); m;){
+        Square st = poplsb(m);
 
-        bitboard_t maskMoves = (rookAttack(st, allBB) 
+        Bitboard maskMoves = (rookAttack(st, allBB) 
                              & okSq
                              & ((pinHV & (1ULL << st)) ? pinHV : all));
 
@@ -246,19 +246,19 @@ void position::genRookMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitb
             maskMoves &= colorBB[!turn];
         }
         while (maskMoves){
-            square_t en = poplsb(maskMoves);
+            Square en = poplsb(maskMoves);
             moves.addMove(encodeMove(st, en, noPiece));
         }      
     }
 }
 
-void position::genQueenMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bitboard_t okSq, moveList &moves){
-    for (bitboard_t m = (pieceBB[queen][turn] & (~(pinHV & pinDA))); m;){
-        square_t sq = poplsb(m);
+void position::genQueenMoves(bool noisy, Bitboard pinHV, Bitboard pinDA, Bitboard okSq, moveList &moves){
+    for (Bitboard m = (pieceBB[queen][turn] & (~(pinHV & pinDA))); m;){
+        Square sq = poplsb(m);
 
-        bitboard_t bishopMoves = (bishopAttack(sq, allBB) & okSq);
-        bitboard_t rookMoves = (rookAttack(sq, allBB) & okSq);
-        bitboard_t maskMoves = bishopMoves | rookMoves;
+        Bitboard bishopMoves = (bishopAttack(sq, allBB) & okSq);
+        Bitboard rookMoves = (rookAttack(sq, allBB) & okSq);
+        Bitboard maskMoves = bishopMoves | rookMoves;
 
         // Pinned diagonally
         if ((1ULL << sq) & pinDA){
@@ -272,29 +272,29 @@ void position::genQueenMoves(bool noisy, bitboard_t pinHV, bitboard_t pinDA, bit
             maskMoves &= colorBB[!turn];
         }
         while (maskMoves){
-            square_t en = poplsb(maskMoves);
+            Square en = poplsb(maskMoves);
             moves.addMove(encodeMove(sq, en, noPiece));
         }  
     }
 }
 
-void position::genKingMoves(bool noisy, bitboard_t attacked, moveList &moves){
-    square_t sq = kingSq(turn);
+void position::genKingMoves(bool noisy, Bitboard attacked, moveList &moves){
+    Square sq = kingSq(turn);
 
     // Generate regular moves
-    bitboard_t maskRegularMoves = (kingAttack(sq) & (~attacked) & (~colorBB[turn]));
+    Bitboard maskRegularMoves = (kingAttack(sq) & (~attacked) & (~colorBB[turn]));
 
     if (noisy){
         maskRegularMoves &= colorBB[!turn];
     }
     while (maskRegularMoves){
-        square_t en = poplsb(maskRegularMoves);
+        Square en = poplsb(maskRegularMoves);
         moves.addMove(encodeMove(sq, en, noPiece));
     }
     
     // Generate castle
     if (!noisy){
-        bitboard_t maskCastleMoves = 0;
+        Bitboard maskCastleMoves = 0;
 
         if (turn == white){
             maskCastleMoves = (1ULL << g1) * ((pos[stk].castleRights & castleWhiteK) and !(attacked & lineBB[e1][g1]) and !(allBB & lineBB[f1][g1]))
@@ -305,7 +305,7 @@ void position::genKingMoves(bool noisy, bitboard_t attacked, moveList &moves){
                             | (1ULL << c8) * (turn == black and (pos[stk].castleRights & castleBlackQ) and !(attacked & lineBB[e8][c8]) and !(allBB & lineBB[b8][d8]));
         }
         while (maskCastleMoves){
-            square_t en = poplsb(maskCastleMoves);
+            Square en = poplsb(maskCastleMoves);
             moves.addMove(encodeMove(sq, en, noPiece));
         }
     }
@@ -313,10 +313,10 @@ void position::genKingMoves(bool noisy, bitboard_t attacked, moveList &moves){
 
 void position::genAllMoves(bool noisy, moveList &moves){
     // Init
-    bitboard_t pinHV = 0;
-    bitboard_t pinDA = 0;
-    bitboard_t attacked = 0;
-    bitboard_t okSq = ~colorBB[turn];
+    Bitboard pinHV = 0;
+    Bitboard pinDA = 0;
+    Bitboard attacked = 0;
+    Bitboard okSq = ~colorBB[turn];
 
     // Calculate variables
     calcPins(pinHV, pinDA);

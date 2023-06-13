@@ -11,7 +11,7 @@
 int threadCount;
 static position board;
 
-char pieceToChar(piece_t p){
+char pieceToChar(Piece p){
     if (p >> 1 == pawn){
         return ((p & 1) == white ? 'P' : 'p');
     }
@@ -33,8 +33,8 @@ char pieceToChar(piece_t p){
     return ' ';
 }
 
-piece_t charToPiece(char c){
-    color_t col = islower(c);
+Piece charToPiece(char c){
+    Color col = islower(c);
     c = tolower(c);
 
     if (c == 'p'){
@@ -58,15 +58,15 @@ piece_t charToPiece(char c){
     return noPiece;
 }
 
-std::string squareToString(square_t sq){
+std::string squareToString(Square sq){
     char fileLetter = (getFile(sq) + 'a');
     return fileLetter + std::to_string(getRank(sq) + 1);
 }
 
-std::string moveToString(move_t move){
-    square_t st = moveFrom(move);
-    square_t en = moveTo(move);
-    piece_t promo = movePromo(move);
+std::string moveToString(Move move){
+    Square st = moveFrom(move);
+    Square en = moveTo(move);
+    Piece promo = movePromo(move);
 
     std::string S = char(getFile(st) + 'a') 
                   + std::to_string(getRank(st) + 1) 
@@ -78,10 +78,10 @@ std::string moveToString(move_t move){
     return S;
 }
 
-move_t stringToMove(std::string move){
-    square_t st = (move[0] - 'a') + 8 * (move[1] - '1');
-    square_t en = (move[2] - 'a') + 8 * (move[3] - '1');
-    piece_t promo = (move.size() == 5) ? (charToPiece(move[4]) >> 1) : 0;
+Move stringToMove(std::string move){
+    Square st = (move[0] - 'a') + 8 * (move[1] - '1');
+    Square en = (move[2] - 'a') + 8 * (move[3] - '1');
+    Piece promo = (move.size() == 5) ? (charToPiece(move[4]) >> 1) : 0;
     return encodeMove(st, en, promo);
 }
 
@@ -103,7 +103,8 @@ void position::readFen(std::string fen){
     allBB = 0;
 
     stk = 0;
-    pos[stk].prevMoveCaptPieceType = noPiece;
+    pos[stk].move = nullOrNoMove;
+    pos[stk].moveCaptType = noPiece;
     pos[stk].castleRights = 0;
     pos[stk].epFile = noEP;
     pos[stk].halfMoveClock = 0;
@@ -111,7 +112,7 @@ void position::readFen(std::string fen){
     pos[stk].zhash = 0;
     
     // Step 3) Fill the board
-    square_t sq = 56;
+    Square sq = 56;
     for (char c : piecePosStr){
         if (c == '/'){
             sq -= 16;
@@ -120,7 +121,7 @@ void position::readFen(std::string fen){
             sq += c - '0';
         }
         else{
-            piece_t piece = charToPiece(c);
+            Piece piece = charToPiece(c);
             addPiece(getPieceType(piece), sq, getPieceColor(piece), false);
             sq++;
         }
@@ -165,8 +166,8 @@ std::string position::getFen(){
     std::string fen = "";
 
     // Step 1) Piece positions
-    for (square_t st = 56; st >= 0; st -= 8){
-        for (square_t sq = st, empt = 0; sq < st + 8; sq++){
+    for (Square st = 56; st >= 0; st -= 8){
+        for (Square sq = st, empt = 0; sq < st + 8; sq++){
             empt += !board[sq];
             if ((board[sq] or sq == st + 7) and empt){
                 fen += std::to_string(empt); 
@@ -325,7 +326,7 @@ static void setPos(std::istringstream &iss){
     }
     // Now play the remaining moves
     while (iss >> token){
-        move_t move = stringToMove(token);
+        Move move = stringToMove(token);
         bool fmr = board.moveCaptType(move) != noPiece or board.movePieceType(move) == pawn;
 
         board.makeMove(move);

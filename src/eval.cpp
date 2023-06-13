@@ -2,7 +2,7 @@
 #include "types.h"
 #include "helpers.h"
 
-bool position::drawByRepetition(depth_t searchPly){
+bool position::drawByRepetition(Depth searchPly){
     // True if one of the following (sensitive to en passant square and castle rights) is true
     // a) Twofold rep in current search (matching ancestor in search)
     // b) Threefold rep if matching ancestors are not in the search
@@ -29,7 +29,9 @@ bool position::drawByRepetition(depth_t searchPly){
 }
 
 bool position::drawByFiftyMoveRule(){
-    // Note that checkmate has a higher priority. TBH it doesn't make much of a difference...
+    // Note that checkmate has a higher priority. Very hard to deal with especially when
+    // it comes to TT so we often just ignore it
+    
     return pos[stk].halfMoveClock >= 100;
 }
 
@@ -42,6 +44,6 @@ bool position::drawByInsufficientMaterial(){
            or (countOnes(allBB) == 3 and (allPiece(knight) | allPiece(bishop)));
 }
 
-score_t position::eval(){
+Score position::eval(){
     return pos[stk].nnue.eval(turn);
 }
