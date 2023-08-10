@@ -206,19 +206,15 @@ template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, D
     if ((sd.nodes & 2047) == 0){
         checkEnd(sd);
     }
-    
     if (sd.stopped){
         return 0;
     }
-
     if (ply > maximumPly){
         return board.eval();
     }
-    
     if (depth <= 0){
         return qsearch<pvNode>(alpha, beta, ply, board, sd, ss);
     }
-    
     if (board.drawByRepetition(ply) or board.drawByInsufficientMaterial() or board.drawByFiftyMoveRule()){
         return 1 - (sd.nodes & 2);
     }

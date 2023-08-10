@@ -11,11 +11,11 @@ const int kingBucketCount = 6;
 const int singleKingBucketSize = 768;
 
 const int inputHalf = kingBucketCount * singleKingBucketSize;
-const int hiddenHalf = 384;
+const int hiddenHalf = 512;
 const int evalScale = 400;
 
-const int Q1 = 255;
-const int Q2 = 64;
+const int Q1 = 256;
+const int Q2 = 256;
 
 const NNUEWeight creluL = 0;
 const NNUEWeight creluR = Q1;

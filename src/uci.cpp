@@ -224,7 +224,7 @@ std::string position::getFen(){
 
 static void printInfo(){
     std::cout<<"id name Superultra"<<std::endl;
-    std::cout<<"id author Alex Liang"<<std::endl;
+    std::cout<<"id author Alexander Liang"<<std::endl;
     std::cout<<"option name Hash type spin default 16 min 1 max 2048"<<std::endl;
     std::cout<<"option name Threads type spin default 1 min 1 max 256"<<std::endl;
     std::cout<<"uciok"<<std::endl;

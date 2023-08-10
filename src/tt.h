@@ -120,7 +120,6 @@ inline Score scoreFromTT(Score score, Depth rootPly){
     return score;
 }
 
-// Quality
 inline int quality(ttEntry entry, TTboundAge ttCurrentAge){
     // If nothing is there then set quality to 0 (which is lowest)
     if (entry.zhash == noHash){
