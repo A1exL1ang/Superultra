@@ -38,8 +38,8 @@ static void initSingleMagic(Square sq, bool isBishop){
     }
 
     // Init variables
-    uint64 blocker[(1 << pos.size())] = {};
-    Bitboard attack[(1 << pos.size())] = {};
+    std::vector<uint64> blocker((1 << pos.size()), 0);
+    std::vector<Bitboard> attack((1 << pos.size()), 0);
 
     // Generate all blocker masks and their corresponding attack masks
     for (uint64 blkMask = 0; blkMask < static_cast<uint64>(1 << pos.size()); blkMask++){

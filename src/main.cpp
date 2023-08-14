@@ -60,7 +60,10 @@ int main(){
 
     // Default settings
     globalTT.setSize(16);
-    threadCount = 1;
+
+
+
+    setThreadCount(1);
 
     /*
     importCheckpoint("checkpoint_886189998_336.bin");
@@ -83,8 +86,9 @@ int main(){
     position board;
 
     
-    threadCount = 1;
-    board.readFen("rnbqkbnr/pppppppp/8/8/8/QQQQQQQQ/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    setThreadCount(1);
+
+    board.readFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     std::cout<<board.eval()<<std::endl;
 
@@ -96,9 +100,9 @@ int main(){
 }
 /*
 .\cutechess-cli `
+-engine conf="E101_HistoryDecay" `
 -engine conf="E100_NewNetQ" `
--engine conf="E88_SIMD2" `
--each tc=6+0.06 timemargin=200 `
+-each tc=30+0.3 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
 -games 2 `
 -rounds 25000 `
@@ -128,4 +132,18 @@ Score of E100_NewNetQ vs E88_SIMD2: 354 - 255 - 790  [0.535] 1399
 ...      White vs Black: 388 - 221 - 790  [0.560] 1399
 Elo difference: 24.6 +/- 12.0, LOS: 100.0 %, DrawRatio: 56.5 %
 SPRT: llr 2.97 (100.9%), lbound -2.94, ubound 2.94 - H1 was accepted
+
+Score of E101_HistoryDecay vs E100_NewNetQ: 334 - 259 - 1412  [0.519] 2005
+...      E101_HistoryDecay playing White: 234 - 89 - 680  [0.572] 1003
+...      E101_HistoryDecay playing Black: 100 - 170 - 732  [0.465] 1002
+...      White vs Black: 404 - 189 - 1412  [0.554] 2005
+Elo difference: 13.0 +/- 8.3, LOS: 99.9 %, DrawRatio: 70.4 %
+SPRT: llr 2.97 (100.8%), lbound -2.94, ubound 2.94 - H1 was accepted
+
+Score of E101_HistoryDecay vs E100_NewNetQ: 180 - 161 - 1299  [0.506] 1640
+...      E101_HistoryDecay playing White: 128 - 43 - 649  [0.552] 820
+...      E101_HistoryDecay playing Black: 52 - 118 - 650  [0.460] 820
+...      White vs Black: 246 - 95 - 1299  [0.546] 1640
+Elo difference: 4.0 +/- 7.7, LOS: 84.8 %, DrawRatio: 79.2 %
+SPRT: llr 0.499 (16.9%), lbound -2.94, ubound 2.94
 */

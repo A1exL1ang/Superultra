@@ -175,8 +175,8 @@ Score neuralNetwork::eval(Color col){
 #else
     for (int i = 0; i < hiddenHalf; i++){
         int16 input = accum[topIdx + i];
-		int16 weight = W2[i];
-		eval += std::clamp(input, creluL, creluR) * weight;
+        int16 weight = W2[i];
+        eval += std::clamp(input, creluL, creluR) * weight;
     }
     for (int i = 0; i < hiddenHalf; i++){
         int16 input = accum[botIdx + i];

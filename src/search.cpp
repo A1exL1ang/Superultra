@@ -5,8 +5,10 @@
 #include <math.h>
 #include <thread>
 #include <vector>
+#include <cstring>
 
 static timeMan tm;
+static std::vector<std::thread> threads;
 static std::vector<searchData> threadSD;
 static Depth lmrReduction[maximumPly + 5][maxMovesInTurn];
 
@@ -15,6 +17,77 @@ void initLMR(){
         for (int i = 0; i < maxMovesInTurn; i++){
             lmrReduction[depth][i] = 1.5 + log(depth) * log(i + 1) / 2;
         }
+    }
+}
+
+void setThreadCount(int tds){
+    threadCount = tds;
+
+    // Vector assign doesn't work with threads
+    while (static_cast<int>(threads.size()) < tds){
+        threads.push_back({});
+        threadSD.push_back({});
+    }
+    while (static_cast<int>(threads.size()) > tds){
+        threads.pop_back();
+        threadSD.pop_back();
+    }
+}
+
+void resetNonHistory(){
+    for (int td = 0; td < threadCount; td++){
+        searchData &sd = threadSD[td];
+
+        // Reset non history / killercounter info
+        sd.threadId = td;
+        sd.stopped = false;
+        sd.selDepth = 0;
+        sd.result = {};
+
+        memset(sd.pvTable, 0, sizeof(sd.pvTable));
+        memset(sd.pvLength, 0, sizeof(sd.pvLength));
+
+        memset(sd.killers, 0, sizeof(sd.killers));
+        memset(sd.counter, 0, sizeof(sd.counter));
+
+        sd.nodes = 0;
+        memset(sd.moveNodeStat, 0, sizeof(sd.moveNodeStat)); 
+    }
+}
+
+void decayHistory(){
+    for (int td = 0; td < threadCount; td++){
+        searchData &sd = threadSD[td];
+
+        // Decay history
+        for (int i = 0; i < 2; i++){
+            for (int j = 0; j < 64; j++){
+                for (int k = 0; k < 64; k++){
+                    sd.history[i][j][k] /= 4;
+                }
+            }
+        }
+
+        // Decay continuation history
+        for (int i = 0; i < 2; i++){
+            for (int j = 0; j < 14; j++){
+                for (int k = 0; k < 64; k++){
+                    for (int l = 0; l < 14; l++){
+                        for (int m = 0; m < 64; m++){
+                            sd.contHist[i][j][k][l][m] /= 4;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void clearHistory(){
+    for (int td = 0; td < threadCount; td++){
+        searchData &sd = threadSD[td];
+        memset(sd.history, 0, sizeof(sd.history));
+        memset(sd.contHist, 0, sizeof(sd.contHist));
     }
 }
 
@@ -846,18 +919,14 @@ void iterativeDeepening(position board, searchData &sd){
 void beginSearch(position board, uciSearchLims lims){
     // Init
     tm.init(board.getTurn(), lims);
-    threadSD.assign(threadCount, {});
+    resetNonHistory();
 
-    // Launch threadCount-1 helper threads (start our indexing from 1)
-    std::thread threads[threadCount];
-
+    // Launch threadCount - 1 helper threads (start our indexing from 1)
     for (int i = 1; i < threadCount; i++){
-        threadSD[i].threadId = i;
         threads[i] = std::thread(iterativeDeepening, board, std::ref(threadSD[i]));
     }
 
     // Launch main thread
-    threadSD[0].threadId = 0;
     iterativeDeepening(board, threadSD[0]);
     
     // Once our main thread is done, stop and join helper threads
@@ -870,4 +939,5 @@ void beginSearch(position board, uciSearchLims lims){
     // Report and update
     selectBestThread();
     globalTT.incrementAge();
+    decayHistory();
 }

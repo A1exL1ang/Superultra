@@ -44,5 +44,9 @@ struct searchData{
 };
 
 void initLMR();
+void resetNonHistory();
+void decayHistory();
+void clearHistory();
+void setThreadCount(int tds);
 void endSearch();
 void beginSearch(position board, uciSearchLims lims);

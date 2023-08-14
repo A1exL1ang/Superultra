@@ -300,7 +300,7 @@ static void setOption(std::istringstream &iss){
     // Thread couunt
     if (optionName == "Threads"){
         iss >> token;
-        threadCount = stoi(token);
+        setThreadCount(stoi(token));
     }
 }
 
@@ -352,10 +352,11 @@ void doLoop(){
         if (token == "uci"){
             printInfo();
         }
-        // Start a new game (we should also clear TT)
+        // Start a new game (we should also clear TT and history)
         else if (token == "ucinewgame"){
             board.readFen(startPosFen);
             globalTT.clearTT(); 
+            clearHistory();
         }
         // Say that you are ready
         else if (token == "isready"){
