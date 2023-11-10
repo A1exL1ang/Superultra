@@ -5,6 +5,7 @@
 #include "helpers.h"
 #include "types.h"
 #include "uci.h"
+#include <cstring>
 
 struct searchStack{
     Score staticEval;
@@ -41,12 +42,61 @@ struct searchData{
 
     uint64 nodes;
     uint64 moveNodeStat[64][64];
+
+    inline void resetNonHistory(int id){
+        threadId = id;
+        stopped = false;
+        selDepth = 0;
+        result = {};
+
+        memset(pvTable, 0, sizeof(pvTable));
+        memset(pvLength, 0, sizeof(pvLength));
+
+        memset(killers, 0, sizeof(killers));
+        memset(counter, 0, sizeof(counter));
+
+        nodes = 0;
+        memset(moveNodeStat, 0, sizeof(moveNodeStat)); 
+    }
+
+    inline void decayHistory(){
+        // Decay history
+        for (int i = 0; i < 2; i++){
+            for (int j = 0; j < 64; j++){
+                for (int k = 0; k < 64; k++){
+                    history[i][j][k] /= 4;
+                }
+            }
+        }
+        // Decay continuation history
+        for (int i = 0; i < 2; i++){
+            for (int j = 0; j < 14; j++){
+                for (int k = 0; k < 64; k++){
+                    for (int l = 0; l < 14; l++){
+                        for (int m = 0; m < 64; m++){
+                            contHist[i][j][k][l][m] /= 4;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    inline void clearHistory(){
+        memset(history, 0, sizeof(history));
+        memset(contHist, 0, sizeof(contHist));
+    }
 };
 
+// Init
 void initLMR();
-void resetNonHistory();
-void decayHistory();
-void clearHistory();
 void setThreadCount(int tds);
+
+// Thread related
+void resetAllSearchDataNonHistory();
+void decayAllSearchDataHistory();
+void clearAllSearchDataHistory();
+
+// Search related
 void endSearch();
 void beginSearch(position board, uciSearchLims lims);

@@ -356,7 +356,7 @@ void doLoop(){
         else if (token == "ucinewgame"){
             board.readFen(startPosFen);
             globalTT.clearTT(); 
-            clearHistory();
+            clearAllSearchDataHistory();
         }
         // Say that you are ready
         else if (token == "isready"){

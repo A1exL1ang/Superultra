@@ -1,9 +1,9 @@
 #pragma once
 
-#include <chrono>
 #include "types.h"
 #include "helpers.h"
 #include "uci.h"
+#include <chrono>
 
 struct timeMan{
     bool forceStop;

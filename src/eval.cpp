@@ -45,5 +45,5 @@ bool position::drawByInsufficientMaterial(){
 }
 
 Score position::eval(){
-    return pos[stk].nnue.eval(turn);
+    return pos[stk].nnue.eval(turn, countOnes(allBB));
 }

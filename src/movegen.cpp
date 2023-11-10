@@ -10,7 +10,7 @@ void position::calcPins(Bitboard &pinHV, Bitboard &pinDA){
         Square sq = poplsb(maskDA);
 
         // Path to king (exclusive of both endpoints) 
-        Bitboard toKing = between(sq, kingSq(turn)) ^ pieceBB[king][turn] ^ (1ULL << sq); 
+        Bitboard toKing = getLine(sq, kingSq(turn)) ^ pieceBB[king][turn] ^ (1ULL << sq); 
 
         // Check if they pin us
         if (countOnes(toKing & colorBB[turn]) == 1){
@@ -25,7 +25,7 @@ void position::calcPins(Bitboard &pinHV, Bitboard &pinDA){
         Square sq = poplsb(maskHV);
 
         // Path to king (exclusive of both endpoints) 
-        Bitboard toKing = between(sq, kingSq(turn)) ^ pieceBB[king][turn] ^ (1ULL << sq); 
+        Bitboard toKing = getLine(sq, kingSq(turn)) ^ pieceBB[king][turn] ^ (1ULL << sq); 
 
         // Check if they pin us
         if (countOnes(toKing & colorBB[turn]) == 1){
@@ -69,7 +69,7 @@ void position::calcAttacks(Bitboard &attacked, Bitboard &okSq){
         
         // They hit our king
         if (att & pieceBB[king][turn]){
-            okSq &= lineBB[sq][kingSq(turn)];
+            okSq &= getLine(sq, kingSq(turn));
         }
     }
 
@@ -82,7 +82,7 @@ void position::calcAttacks(Bitboard &attacked, Bitboard &okSq){
 
         // They hit our king
         if (att & pieceBB[king][turn]){
-            okSq &= lineBB[sq][kingSq(turn)];
+            okSq &= getLine(sq, kingSq(turn));
         }
     }
 
@@ -95,7 +95,7 @@ void position::calcAttacks(Bitboard &attacked, Bitboard &okSq){
 
         // They hit our king
         if (att & pieceBB[king][turn]){
-            okSq &= lineBB[sq][kingSq(turn)];
+            okSq &= getLine(sq, kingSq(turn));
         }
     }
 }
@@ -112,6 +112,7 @@ void position::genPawnMoves(bool noisy, Bitboard pinHV, Bitboard pinDA, Bitboard
 
     // Directional captures. Either the pawn is not pinned at all or is diagonally 
     // pinned. If it is the latter, then the pawn can only capture in one direction
+    
     Bitboard pawnCaptLeftEnd = (pawnsLeftAttack(pawnNotPinned, turn) | (pawnsLeftAttack(pawnPinnedDA, turn) & pinDA));
     Bitboard pawnCaptRightEnd = (pawnsRightAttack(pawnNotPinned, turn) | (pawnsRightAttack(pawnPinnedDA, turn) & pinDA));
     pawnCaptLeftEnd &= (colorBB[!turn] & okSq);
@@ -297,12 +298,12 @@ void position::genKingMoves(bool noisy, Bitboard attacked, moveList &moves){
         Bitboard maskCastleMoves = 0;
 
         if (turn == white){
-            maskCastleMoves = (1ULL << g1) * ((pos[stk].castleRights & castleWhiteK) and !(attacked & lineBB[e1][g1]) and !(allBB & lineBB[f1][g1]))
-                            | (1ULL << c1) * ((pos[stk].castleRights & castleWhiteQ) and !(attacked & lineBB[e1][c1]) and !(allBB & lineBB[b1][d1]));
+            maskCastleMoves = (1ULL << g1) * ((pos[stk].castleRights & castleWhiteK) and !(attacked & getLine(e1, g1)) and !(allBB & getLine(f1, g1)))
+                            | (1ULL << c1) * ((pos[stk].castleRights & castleWhiteQ) and !(attacked & getLine(e1, c1)) and !(allBB & getLine(b1, d1)));
         }
         else{
-            maskCastleMoves = (1ULL << g8) * (turn == black and (pos[stk].castleRights & castleBlackK) and !(attacked & lineBB[e8][g8]) and !(allBB & lineBB[f8][g8]))
-                            | (1ULL << c8) * (turn == black and (pos[stk].castleRights & castleBlackQ) and !(attacked & lineBB[e8][c8]) and !(allBB & lineBB[b8][d8]));
+            maskCastleMoves = (1ULL << g8) * ((pos[stk].castleRights & castleBlackK) and !(attacked & getLine(e8, g8)) and !(allBB & getLine(f8, g8)))
+                            | (1ULL << c8) * ((pos[stk].castleRights & castleBlackQ) and !(attacked & getLine(e8, c8)) and !(allBB & getLine(b8, d8)));
         }
         while (maskCastleMoves){
             Square en = poplsb(maskCastleMoves);
@@ -335,4 +336,131 @@ void position::genAllMoves(bool noisy, moveList &moves){
     genRookMoves(noisy, pinHV, pinDA, okSq, moves);
     genQueenMoves(noisy, pinHV, pinDA, okSq, moves);
     genKingMoves(noisy, attacked, moves);
+}
+
+bool position::isLegal(Move move){
+    // Init
+    Square st = moveFrom(move);
+    Square en = moveTo(move);
+    Piece pieceType = movePieceType(move); 
+    Color col = movePieceColor(move);
+    Piece promo = movePromo(move);
+
+    // Part 1) Our first step is to deal with all the special cases. This includes no piece / wrong color,
+    // friendly piece at the destination, invalid promotion, enpassant, and king moves (including castling). 
+
+    // We aren't moving any piece or wrong color
+    if (pieceType == noPiece or col != turn){
+        return false;
+    }
+
+    // Friendly piece at en
+    if ((1ULL << en) & colorBB[turn]){
+        return false;
+    }
+
+    // Invalid pawn promotion (not at end but promo or at end but no promo)
+    if (pieceType == pawn and ((getRank(en) == (turn == white ? 7 : 0)) != (promo != noPiece))){
+        return false;
+    }
+
+    // Non-pawn tries to promote
+    if (pieceType != pawn and promo != noPiece){
+        return false;
+    }
+
+    // En passant (pawn moves diagonally but doesn't capture anything)
+    if (pieceType == pawn
+        and ((1ULL << en) & pawnAttack(st, turn))
+        and !((1ULL << en) & colorBB[!turn]))
+    {
+        // If we can't do en passant
+        if (pos[stk].epFile == noEP)
+            return false;
+
+        Square epEnemyPawn = pos[stk].epFile + (turn == white ? 32 : 24);
+        Square epDestination = pos[stk].epFile + (turn == white ? 40 : 16);
+
+        // Move destination not equal to en passant destination
+        if (en != epDestination)
+            return false;
+
+        Bitboard occupancyAfter = (allBB ^ (1ULL << st) ^ (1ULL << epDestination) ^ (1ULL << epEnemyPawn));
+        
+        // Good if no discovered attacks and not already in check. This is en passant so need to clear
+        // out enemy pawn
+
+        return !(pawnAttack(kingSq(turn), turn) & (pieceBB[pawn][!turn] & (~(1ULL << epEnemyPawn))))
+                and !(knightAttack(kingSq(turn)) & pieceBB[knight][!turn])
+                and !(bishopAttack(kingSq(turn), occupancyAfter) & pieceBB[bishop][!turn])
+                and !(rookAttack(kingSq(turn), occupancyAfter) & pieceBB[rook][!turn])
+                and !(queenAttack(kingSq(turn), occupancyAfter) & pieceBB[queen][!turn]);
+    }
+
+    // King move
+    if (pieceType == king){
+
+        // Note that we xray through our king
+        Bitboard attacked = allAttack(!turn, allBB ^ pieceBB[king][turn]);
+        Bitboard moves = (kingAttack(st) & (~attacked) & (~colorBB[turn]));
+
+        if (turn == white){
+            moves |= (1ULL << g1) * ((pos[stk].castleRights & castleWhiteK) and !(attacked & getLine(e1, g1)) and !(allBB & getLine(f1, g1)))
+                   | (1ULL << c1) * ((pos[stk].castleRights & castleWhiteQ) and !(attacked & getLine(e1, c1)) and !(allBB & getLine(b1, d1)));
+        }
+        else{
+            moves |= (1ULL << g8) * ((pos[stk].castleRights & castleBlackK) and !(attacked & getLine(e8, g8)) and !(allBB & getLine(f8, g8)))
+                   | (1ULL << c8) * ((pos[stk].castleRights & castleBlackQ) and !(attacked & getLine(e8, c8)) and !(allBB & getLine(b8, d8)));
+        }
+        return static_cast<bool>((1ULL << en) & moves);
+    }
+
+    // Part 2) With the special cases out of the way, now we are left with "normal" moves. We first have
+    // to check whether a piece of the given type can move from st to en (for example a rook cannot do a diagonal move).
+    // Then we check whether moving the piece from st to en reveals any discovered attacks to the king
+
+    // Pawn psuedolegalality
+    if (pieceType == pawn){
+
+        // Rank relative to stm
+        Bitboard pawnPushEnd = (pawnsUp((1ULL << st), turn) & (~allBB));
+        Bitboard pawnDoublePushEnd = (pawnsUp((pawnPushEnd & allInRank[turn == white ? 2 : 5]), turn) & (~allBB));
+        Bitboard pawnAttackEnd = (pawnAttack(st, turn) & colorBB[!turn]);
+
+        // Not psuedolegal
+        if (!((1ULL << en) & (pawnPushEnd | pawnDoublePushEnd | pawnAttackEnd))){
+            return false;
+        }
+    }
+
+    // Knight psuedolegality
+    if (pieceType == knight and !((1ULL << en) & knightAttack(st))){
+        return false;
+    }
+
+    // Bishop psuedolegality
+    if (pieceType == bishop and !((1ULL << en) & bishopAttack(st, allBB))){
+        return false;
+    }
+
+    // Rook psuedolegality
+    if (pieceType == rook and !((1ULL << en) & rookAttack(st, allBB))){
+        return false;
+    }
+
+    // Queen psuedolegality
+    if (pieceType == queen and !((1ULL << en) & queenAttack(st, allBB))){
+        return false;
+    }
+
+    // Don't xor (1ULL << en) since that bit may be set if we are capturing a piece at en.
+    // Also make sure to clear out the captured piece from pieceBB
+
+    Bitboard occupancyAfter = (allBB ^ (1ULL << st)) | (1ULL << en);
+
+    return !(pawnAttack(kingSq(turn), turn) & (pieceBB[pawn][!turn] & (~(1ULL << en))))
+            and !(knightAttack(kingSq(turn)) & (pieceBB[knight][!turn] & (~(1ULL << en))))
+            and !(bishopAttack(kingSq(turn), occupancyAfter) & (pieceBB[bishop][!turn] & (~(1ULL << en))))
+            and !(rookAttack(kingSq(turn), occupancyAfter) & (pieceBB[rook][!turn] & (~(1ULL << en))))
+            and !(queenAttack(kingSq(turn), occupancyAfter) & (pieceBB[queen][!turn] & (~(1ULL << en))));
 }

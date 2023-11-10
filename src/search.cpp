@@ -34,60 +34,21 @@ void setThreadCount(int tds){
     }
 }
 
-void resetNonHistory(){
+void resetAllSearchDataNonHistory(){
     for (int td = 0; td < threadCount; td++){
-        searchData &sd = threadSD[td];
-
-        // Reset non history / killercounter info
-        sd.threadId = td;
-        sd.stopped = false;
-        sd.selDepth = 0;
-        sd.result = {};
-
-        memset(sd.pvTable, 0, sizeof(sd.pvTable));
-        memset(sd.pvLength, 0, sizeof(sd.pvLength));
-
-        memset(sd.killers, 0, sizeof(sd.killers));
-        memset(sd.counter, 0, sizeof(sd.counter));
-
-        sd.nodes = 0;
-        memset(sd.moveNodeStat, 0, sizeof(sd.moveNodeStat)); 
+        threadSD[td].resetNonHistory(td);
     }
 }
 
-void decayHistory(){
+void decayAllSearchDataHistory(){
     for (int td = 0; td < threadCount; td++){
-        searchData &sd = threadSD[td];
-
-        // Decay history
-        for (int i = 0; i < 2; i++){
-            for (int j = 0; j < 64; j++){
-                for (int k = 0; k < 64; k++){
-                    sd.history[i][j][k] /= 4;
-                }
-            }
-        }
-
-        // Decay continuation history
-        for (int i = 0; i < 2; i++){
-            for (int j = 0; j < 14; j++){
-                for (int k = 0; k < 64; k++){
-                    for (int l = 0; l < 14; l++){
-                        for (int m = 0; m < 64; m++){
-                            sd.contHist[i][j][k][l][m] /= 4;
-                        }
-                    }
-                }
-            }
-        }
+        threadSD[td].decayHistory();
     }
 }
 
-void clearHistory(){
+void clearAllSearchDataHistory(){
     for (int td = 0; td < threadCount; td++){
-        searchData &sd = threadSD[td];
-        memset(sd.history, 0, sizeof(sd.history));
-        memset(sd.contHist, 0, sizeof(sd.contHist));
+        threadSD[td].clearHistory();
     }
 }
 
@@ -919,7 +880,7 @@ void iterativeDeepening(position board, searchData &sd){
 void beginSearch(position board, uciSearchLims lims){
     // Init
     tm.init(board.getTurn(), lims);
-    resetNonHistory();
+    resetAllSearchDataNonHistory();
 
     // Launch threadCount - 1 helper threads (start our indexing from 1)
     for (int i = 1; i < threadCount; i++){
@@ -939,5 +900,5 @@ void beginSearch(position board, uciSearchLims lims){
     // Report and update
     selectBestThread();
     globalTT.incrementAge();
-    decayHistory();
+    decayAllSearchDataHistory();
 }

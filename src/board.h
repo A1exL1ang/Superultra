@@ -24,8 +24,11 @@ struct boardState{
 class position{
 
 public:
-    // Move gen
+    // Move gen (fully legal)
     void genAllMoves(bool noisy, moveList &moves);
+
+    // Legality related for staged movegen
+    bool isLegal(Move move);
 
     // Move make/unmake
     void makeMove(Move move);
@@ -61,7 +64,7 @@ public:
     inline TTKey getHash(){
         return pos[stk].zhash;
     }
-    inline Bitboard allAttack(Color col){
+    inline Bitboard allAttack(Color col, Bitboard occupancy){
         Bitboard attacked = 0;
         attacked |= pawnsAllAttack(pieceBB[pawn][col], col) | kingAttack(kingSq(col));
 
@@ -69,18 +72,18 @@ public:
             attacked |= knightAttack(poplsb(m));
         }
         for (Bitboard m = pieceBB[bishop][col]; m;){
-            attacked |= bishopAttack(poplsb(m), allBB);
+            attacked |= bishopAttack(poplsb(m), occupancy);
         }
         for (Bitboard m = pieceBB[rook][col]; m;){
-            attacked |= rookAttack(poplsb(m), allBB);
+            attacked |= rookAttack(poplsb(m), occupancy);
         }
         for (Bitboard m = pieceBB[queen][col]; m;){
-            attacked |= queenAttack(poplsb(m), allBB);
+            attacked |= queenAttack(poplsb(m), occupancy);
         }
         return attacked;
     }
     inline bool inCheck(){
-        return (allAttack(!turn) & pieceBB[king][turn]);
+        return (allAttack(!turn, allBB) & pieceBB[king][turn]);
     }
     inline Piece movePieceEnc(Move move){
         return board[moveFrom(move)];
@@ -88,10 +91,14 @@ public:
     inline Piece movePieceType(Move move){
         return getPieceType(board[moveFrom(move)]);
     }
+    inline Piece movePieceColor(Move move){
+        return getPieceColor(board[moveFrom(move)]);
+    }
     inline Piece moveCaptType(Move move){
         return isEP(move) ? pawn : getPieceType(board[moveTo(move)]);
     }
     inline bool isEP(Move move){
+        // Assumes 'move' is legal so don't use this for legality checks
         return getPieceType(board[moveFrom(move)]) == pawn 
                and getFile(moveFrom(move)) != getFile(moveTo(move))
                and board[moveTo(move)] == noPiece;
@@ -101,8 +108,7 @@ public:
     }
 
 private:
-    // Position stack (UCI doesnt support undo so we store the minimum (up to 50mr)
-    // and reset the stack when necessary)
+    // Position stack (UCI doesnt support undo so we store the minimum (up to 50mr) and reset the stack when necessary)
     boardState pos[maximumPly + 105];
     int stk;
 

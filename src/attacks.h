@@ -31,8 +31,8 @@ const Bitboard rookMagicMask[64] = {282578800148862ULL, 565157600297596ULL, 1130
 extern Bitboard bishopMagicCache[64][512];
 extern Bitboard rookMagicCache[64][4096];
 
-// We create an "interface" of inlined functions (to be consistent)
-inline Bitboard between(Square sq1, Square sq2){
+// Note that function 'getLine' is inclusive of the endpoints
+inline Bitboard getLine(Square sq1, Square sq2){
     return lineBB[sq1][sq2];
 }
 

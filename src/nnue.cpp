@@ -8,8 +8,8 @@ INCBIN(nnueNet, "nnueweights.bin");
 
 alignas(32) static NNUEWeight W1[inputHalf * hiddenHalf];
 alignas(32) static NNUEWeight B1[hiddenHalf];
-alignas(32) static NNUEWeight W2[hiddenHalf * 2];
-alignas(32) static NNUEWeight B2;
+alignas(32) static NNUEWeight W2[outputWeightBucketCount * hiddenHalf * 2];
+alignas(32) static NNUEWeight B2[outputWeightBucketCount];
 
 void neuralNetwork::addFeature(Piece pieceType, Square sq, Color col, Square wking, Square bking){
     const int whitePerspIdx = getInputIndex(pieceType, col, sq, white, wking) * hiddenHalf;
@@ -129,10 +129,14 @@ void neuralNetwork::refresh(Piece *board, Square wking, Square bking){
     }
 }
 
-Score neuralNetwork::eval(Color col){
+Score neuralNetwork::eval(Color col, int8 pieceCount){
     int topIdx = (col == white ? 0 : hiddenHalf);
     int botIdx = (col == white ? hiddenHalf : 0);
-    int eval = B2;
+
+    int outputWeightBucket = calculateOutputBucket(pieceCount);
+    int outputWeightsIndex = outputWeightBucket * hiddenHalf * 2;
+
+    int eval = B2[outputWeightBucket];
 
 #if defined(__AVX__) || defined(__AVX2__)
     // Vector of int32 to avoid overflow
@@ -141,10 +145,10 @@ Score neuralNetwork::eval(Color col){
     const auto vectorCreluR = _mm256_set1_epi16(creluR);
 
     const auto vectorAccumTopPtr = reinterpret_cast<__m256i*>(&accum[topIdx]);
-    const auto vectorWeightTopPtr = reinterpret_cast<__m256i*>(&W2[0]);
+    const auto vectorWeightTopPtr = reinterpret_cast<__m256i*>(&W2[outputWeightsIndex]);
 
     const auto vectorAccumBotPtr = reinterpret_cast<__m256i*>(&accum[botIdx]);
-    const auto vectorWeightBotPtr = reinterpret_cast<__m256i*>(&W2[hiddenHalf]);
+    const auto vectorWeightBotPtr = reinterpret_cast<__m256i*>(&W2[outputWeightsIndex + hiddenHalf]);
 
     // The only thing i'll note here is that _mm256_madd_epi16(a, b) is very useful.
     // The function takes in two int16 vectors and multiplies eveyr pair of elems and then
@@ -175,12 +179,12 @@ Score neuralNetwork::eval(Color col){
 #else
     for (int i = 0; i < hiddenHalf; i++){
         int16 input = accum[topIdx + i];
-        int16 weight = W2[i];
+        int16 weight = W2[outputWeightsIndex + i];
         eval += std::clamp(input, creluL, creluR) * weight;
     }
     for (int i = 0; i < hiddenHalf; i++){
         int16 input = accum[botIdx + i];
-        int16 weight = W2[hiddenHalf + i];
+        int16 weight = W2[outputWeightsIndex + hiddenHalf + i];
         eval += std::clamp(input, creluL, creluR) * weight;
     }
 #endif
@@ -201,9 +205,9 @@ void initNNUEWeights(){
     idx += hiddenHalf * sizeof(NNUEWeight);
 
     // W2
-    memcpy(W2, gnnueNetData + idx, hiddenHalf * sizeof(NNUEWeight) * 2);
+    memcpy(W2, gnnueNetData + idx, outputWeightBucketCount * hiddenHalf * 2 * sizeof(NNUEWeight));
     idx += hiddenHalf * sizeof(NNUEWeight) * 2;
     
     // B2
-    memcpy(&B2, gnnueNetData + idx, sizeof(NNUEWeight)); 
+    memcpy(B2, gnnueNetData + idx, outputWeightBucketCount * sizeof(NNUEWeight));
 }
