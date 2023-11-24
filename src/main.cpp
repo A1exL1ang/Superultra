@@ -2,6 +2,7 @@
 #include "uci.h"
 #include "attacks.h"
 #include "search.h"
+#include "movescore.h"
 #include <iostream>
 #include <fstream>
 #include <math.h>
@@ -21,6 +22,20 @@ static inline uint64 genRand(){
     return seed = seed * 6364136223846793005ULL + 1442695040888963407ULL;
 }
 
+/*
+
+info depth 17 seldepth 26 score cp 28 nodes 1485707 time 592 nps 2509597 hashfull 358 pv d2d4 g8f6 c2c4 e7e6 g1f3 d7d5 b1c3 c7c5 c4d5 f6d5 e2e4 d5c3 b2c3 c5d4 c3d4 f8b4 c1d2 
+info depth 18 seldepth 33 score cp 33 nodes 2908343 time 1171 nps 2483619 hashfull 653 pv e2e4 c7c5 b1c3 d7d6 g1f3 e7e5 f1c4 f8e7 d2d3 g8f6 c1g5 e8g8 g5f6 e7f6 c3d5 g8h8 d5e3 b8c6 
+info depth 19 seldepth 34 score cp 29 nodes 6113537 time 2474 nps 2471104 hashfull 948 pv d2d4 g8f6 c2c4 e7e6 b1c3 d7d5 c1g5 f8e7 c4d5 f6d5 g5e7 d8e7 d1c2 e8g8 g1f3 f8d8 e2e3 d5b4 c2e4 c7c5 a2a3
+
+info depth 20 seldepth 30 score cp 31 nodes 7264762 time 2941 nps 2470158 hashfull 982 pv d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 d1c2 d7d5 a2a3 b4c3 c2c3 d5c4 c3c4 e8g8 c1f4 f6d5 f4g3 b7b6 g1f3 c8a6 c4c2
+
+info depth 21 seldepth 34 score cp 28 nodes 9716873 time 3921 nps 2478155 hashfull 1000 pv d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 d1c2 d7d5 c4d5 e6d5 c1g5 h7h6 g5f6 d8f6 a2a3 b4c3 c2c3 b8d7 e2e3 c7c6 f1d3 e8g8
+info depth 22 seldepth 34 score cp 36 nodes 13115003 time 5252 nps 2497139 hashfull 1000 pv d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 d1c2 d7d5 a2a3 b4c3 c2c3 e8g8 g1f3 b7b6 c1g5 d5c4 c3c4 b8d7 c4c6 c8a6 e2e4 a6f1
+info depth 23 seldepth 37 score cp 27 nodes 20860498 time 8293 nps 2515431 hashfull 1000 pv d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 d1c2 d7d5 a2a3 b4c3 c2c3 e8g8 g1f3 b7b6 c1g5 d5c4 c3c4 c8b7 e2e3 c7c5 f1e2 b8d7 e1g1 h7h6 g5h4
+info depth 24 seldepth 39 score cp 29 nodes 30260804 time 12173 nps 2485893 hashfull 1000 pv d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 d1c2 d7d5 a2a3 b4c3 c2c3 e8g8 g1f3 b7b6 c1g5 d5c4 c3c4 c8b7 e2e3 c7c5 d4c5 b6c5 c4c5 b8d7 c5d6 d8a5 b2b4
+
+*/
 // NN eval: 22.834187ns
 // NN average: 35.858618ns
 // Movegen is 82ns
@@ -43,6 +58,7 @@ static uint64 perft(Depth depth, Depth depthLim){
         return moves.sz;
     }
     
+    /*
     if (mvs.size()){
         Move test = mvs[genRand() % (mvs.size())];
         bool answer = false;
@@ -53,6 +69,9 @@ static uint64 perft(Depth depth, Depth depthLim){
             std::cout<<perftBoard.getFen()<<"\n"<<moveToString(test)<<" "<<perftBoard.isLegal(test)<<std::endl;
         }
     }
+    */
+    // movePicker mp;
+    
 
     uint64 leaves = 0;
     for (int i = 0; i < moves.sz; i++){
@@ -130,12 +149,12 @@ int main(){
     // std::cout<<perftBoard.isLegal(stringToMove("e7f7"))<<std::endl;
     // return 0;
 
-    perftBoard.readFen("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1");
+    // perftBoard.readFen("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
     // ~82ns per position
-    std::cout<<perft(0, 8)<<std::endl;
-    std::cout<<std::fixed<<(tot + 0.0) / cnt<<std::endl;
-    std::cout<<totLegal<<std::endl;
-    return 0;
+    // std::cout<<perft(0, 5)<<std::endl;
+    // std::cout<<std::fixed<<(tot + 0.0) / cnt<<std::endl;
+    // std::cout<<totLegal<<std::endl;
+    // return 0;
     
 
 
@@ -161,15 +180,15 @@ int main(){
     uciSearchLims lims;
     lims.movesToGo = 50;
     lims.timeIncr[board.getTurn()] = 0;
-    lims.timeLeft[board.getTurn()] = 2000 * 50;
+    lims.timeLeft[board.getTurn()] = 20000 * 50;
 
     beginSearch(board, lims);
     // beginSearch(board, lims);
 }
 /*
 .\cutechess-cli `
+-engine conf="E105_StagedMoveGen1" `
 -engine conf="E104_BiasBuckets" `
--engine conf="E102_BigNet" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
 -games 2 `
@@ -183,6 +202,14 @@ int main(){
 -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
 */
 
+/*
+Score of E105_StagedMoveGen1 vs E104_BiasBuckets: 2054 - 2033 - 8299  [0.501] 12386
+...      E105_StagedMoveGen1 playing White: 1404 - 644 - 4145  [0.561] 6193
+...      E105_StagedMoveGen1 playing Black: 650 - 1389 - 4154  [0.440] 6193
+...      White vs Black: 2793 - 1294 - 8299  [0.561] 12386
+Elo difference: 0.6 +/- 3.5, LOS: 62.9 %, DrawRatio: 67.0 %
+SPRT: llr -2.97 (-100.9%), lbound -2.94, ubound 2.94 - H0 was accepted
+*/
 
 
 /*

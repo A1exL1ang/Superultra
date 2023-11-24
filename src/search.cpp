@@ -154,7 +154,7 @@ template<bool pvNode> static Score qsearch(Score alpha, Score beta, Depth ply, p
     // Note that we set bestScore to -checkMateScore but we will max it with standingPat after the loop
 
     Score bestScore = -checkMateScore;
-    Move bestMove = 0;
+    Move bestMove = nullOrNoMove;
 
     for (int i = 0; i < moves.sz; i++){
         // Step 6) Bring best move forwards and initialize
