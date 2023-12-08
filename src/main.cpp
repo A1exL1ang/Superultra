@@ -34,8 +34,17 @@ info depth 21 seldepth 34 score cp 28 nodes 9716873 time 3921 nps 2478155 hashfu
 info depth 22 seldepth 34 score cp 36 nodes 13115003 time 5252 nps 2497139 hashfull 1000 pv d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 d1c2 d7d5 a2a3 b4c3 c2c3 e8g8 g1f3 b7b6 c1g5 d5c4 c3c4 b8d7 c4c6 c8a6 e2e4 a6f1
 info depth 23 seldepth 37 score cp 27 nodes 20860498 time 8293 nps 2515431 hashfull 1000 pv d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 d1c2 d7d5 a2a3 b4c3 c2c3 e8g8 g1f3 b7b6 c1g5 d5c4 c3c4 c8b7 e2e3 c7c5 f1e2 b8d7 e1g1 h7h6 g5h4
 info depth 24 seldepth 39 score cp 29 nodes 30260804 time 12173 nps 2485893 hashfull 1000 pv d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 d1c2 d7d5 a2a3 b4c3 c2c3 e8g8 g1f3 b7b6 c1g5 d5c4 c3c4 c8b7 e2e3 c7c5 d4c5 b6c5 c4c5 b8d7 c5d6 d8a5 b2b4
-
 */
+
+/*
+Newer:
+info depth 21 seldepth 34 score cp 33 nodes 6807524 time 2667 nps 2552492 hashfull 958 pv e2e4 e7e6 d2d4 d7d5 b1c3 g8f6 c1g5 d5e4 c3e4 f8e7 g5f6 g7f6 g1f3 b8d7 e4c3 a7a6 f1d3 b7b5 d4d5 d7b6 d5e6 c8e6
+info depth 22 seldepth 40 score cp 29 nodes 14364340 time 5587 nps 2571024 hashfull 1000 pv e2e4 e7e6 d2d4 d7d5 b1c3 g8f6 c1g5 d5e4 c3e4 f8e7 g5f6 g7f6 g1f3 b8d7 e4c3 a7a6 d1e2 b7b5 d4d5 d7b6 d5e6 f7e6 g2g3
+info depth 23 seldepth 37 score cp 31 nodes 17589889 time 6839 nps 2571993 hashfull 1000 pv e2e4 e7e6 d2d4 d7d5 b1c3 g8f6 c1g5 d5e4 c3e4 f8e7 g5f6 e7f6 c2c3 b8d7 g1f3 e8g8 f1d3 e6e5 e1g1 e5d4 c3d4 d7b6 d1c2 f6d4
+info depth 24 seldepth 36 score cp 33 nodes 26221043 time 10400 nps 2521251 hashfull 1000 pv e2e4 e7e6 d2d4 d7d5 b1c3 g8f6 c1g5 d5e4 c3e4 f8e7 g5f6 e7f6 c2c3 b8d7 g1f3 e8g8 f1d3 e6e5 e4f6 d8f6 e1g1 e5d4 c3d4 f6b6 d1c2 d7f6
+*/
+
+
 // NN eval: 22.834187ns
 // NN average: 35.858618ns
 // Movegen is 82ns
@@ -127,7 +136,7 @@ int main(){
     */
 
     // Begin the UCI Loop
-    if (false){
+    if (true){
         doLoop();
         return 0;
     }
@@ -172,7 +181,7 @@ int main(){
     
     setThreadCount(1);
 
-    board.readFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    board.readFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
 
     std::cout<<board.eval()<<std::endl;
     // return 0;
@@ -187,7 +196,7 @@ int main(){
 }
 /*
 .\cutechess-cli `
--engine conf="E105_StagedMoveGen1" `
+-engine conf="E107_ScoreLaterBetterProbcut" `
 -engine conf="E104_BiasBuckets" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
@@ -200,6 +209,15 @@ int main(){
 -concurrency 8 `
 -ratinginterval 10 `
 -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
+*/
+
+/*
+Score of E107_ScoreLaterBetterProbcut vs E104_BiasBuckets: 1037 - 927 - 4134  [0.509] 6098
+...      E107_ScoreLaterBetterProbcut playing White: 711 - 299 - 2039  [0.568] 3049
+...      E107_ScoreLaterBetterProbcut playing Black: 326 - 628 - 2095  [0.450] 3049
+...      White vs Black: 1339 - 625 - 4134  [0.559] 6098
+Elo difference: 6.3 +/- 4.9, LOS: 99.3 %, DrawRatio: 67.8 %
+SPRT: llr 2.96 (100.5%), lbound -2.94, ubound 2.94 - H1 was accepted
 */
 
 /*

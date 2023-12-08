@@ -371,24 +371,13 @@ template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, D
         }
     }
     
-    // Step 9) Generate moves and end of game checking
-    // Generate moves and if we have 0 moves then the game ended. Also score the moves
-
-    moveList moves, quiets;
-    board.genAllMoves(false, moves);
-     
-    if (moves.sz == 0){
-        return inCheck ? -(checkMateScore - ply) : 0;
-    }
-    scoreMoves(moves, foundEntry ? tte.bestMove : nullOrNoMove, ply, board, sd, ss);
-
-    // Step 10) Probcut (~11.5 elo)
+    // Step 9) Probcut (~11.5 elo)
     // probCutBeta is a calculated value above beta. We try promising tactical moves and if any
     // of them have a score higher than probCutBeta at a reduced depth then we can assume that move will 
     // will have a score higher than beta at a normal depth
-
+    
     Score probCutBeta = std::min(beta + 200 - 40 * improving, static_cast<int>(checkMateScore));
-
+    
     if (!pvNode 
         and !inCheck
         and ss->excludedMove == nullOrNoMove
@@ -396,11 +385,18 @@ template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, D
         and abs(beta) < foundMate 
         and !(foundEntry and tte.score < probCutBeta and tte.depth + 3 >= depth))
     {
-        for (int i = 0; i < moves.sz; i++){
-            Move move = moves.moves[i].move;
+        // We only try noisy moves
+        moveList probCutMoves;
+        board.genAllMoves(true, probCutMoves);
+        
+        scoreMoves(probCutMoves, foundEntry ? tte.bestMove : nullOrNoMove, ply, board, sd, ss);
 
-            // Only try tactical moves that are promo or have SEE that will put us above probCutBeta
-            if (!(movePromo(move) != noPiece or (board.moveCaptType(move) != noPiece and board.seeGreater(move, probCutBeta - ss->staticEval)))){
+        for (int i = 0; i < probCutMoves.sz; i++){
+            probCutMoves.bringBest(i);
+            Move move = probCutMoves.moves[i].move;
+
+            // SEE that will put us above probCutBeta
+            if (!board.seeGreater(move, probCutBeta - ss->staticEval)){
                 continue;
             }
 
@@ -432,6 +428,17 @@ template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, D
             }
         }
     }
+    
+    // Step 10) Generate moves, end of game checking, and move scoring
+    // Generate moves and if we have 0 moves then the game ended. Also score the moves...
+
+    moveList moves, quiets;
+    board.genAllMoves(false, moves);
+     
+    if (moves.sz == 0){
+        return inCheck ? -(checkMateScore - ply) : 0;
+    }
+    scoreMoves(moves, foundEntry ? tte.bestMove : nullOrNoMove, ply, board, sd, ss);
 
     // Step 11) Iterate over the moves
     // Pretty self explanatory...

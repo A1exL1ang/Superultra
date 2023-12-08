@@ -14,8 +14,8 @@ bool position::seeGreater(Move move, Score threshold){
 
     Square st = moveFrom(move);
     Square target = moveTo(move);
-    Piece movePieceType = getPieceType(board[st]);
-    Piece moveCaptType = getPieceType(board[target]);
+    Piece pieceTypeMoved = movePieceType(move);
+    Piece pieceTypeCaptured = moveCaptType(move);
 
     // Deal with special moves:
     // 1) Always return true for promotion
@@ -28,11 +28,11 @@ bool position::seeGreater(Move move, Score threshold){
     if (isEP(move)){
         return threshold <= pieceScore[pawn];
     }
-    if (movePieceType == king and abs(getFile(st) - getFile(target)) == 2){
+    if (pieceTypeMoved == king and abs(getFile(st) - getFile(target)) == 2){
         return threshold <= 0;
     }
     // Perform the initial capture (note that capt == noPiece may be true)
-    Score score = pieceScore[moveCaptType];
+    Score score = pieceScore[pieceTypeCaptured];
 
     // Cur player is not above the threshold after initially capturing
     if (score < threshold){
@@ -42,7 +42,7 @@ bool position::seeGreater(Move move, Score threshold){
     // pieceTypeToBeCaptured is the piece that is at the square waiting to be captured
     // col is the color that is going to capture pieceTypeToBeCaptured
 
-    Piece pieceTypeToBeCaptured = movePieceType;
+    Piece pieceTypeToBeCaptured = pieceTypeMoved;
     Color col = !turn;
     Bitboard occupancy = (allBB ^ (1ULL << st)) | (1ULL << target);
 
