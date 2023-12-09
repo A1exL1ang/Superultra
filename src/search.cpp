@@ -102,9 +102,7 @@ template<bool pvNode> static Score qsearch(Score alpha, Score beta, Depth ply, p
 
     ss->staticEval = noScore;
 
-    if (foundEntry
-        and !pvNode)
-    {
+    if (foundEntry and !pvNode){
         if (decodeBound(tte.ageAndBound) == boundExact 
             or (decodeBound(tte.ageAndBound) == boundLower and tte.score >= beta)
             or (decodeBound(tte.ageAndBound) == boundUpper and tte.score <= alpha))
@@ -162,14 +160,20 @@ template<bool pvNode> static Score qsearch(Score alpha, Score beta, Depth ply, p
 
         moves.bringBest(i);
         Move move = moves.moves[i].move;
+        Movescore mscore = moves.moves[i].score;
 
         // Step 7) SEE Pruning (~6.5 elo)
-        // Skip moves with bad SEE
+        // Skip moves with bad SEE. First if statement skips all moves the moment
+        // we hit a losing move determined in move ordering. The second statement
+        // ignores all moves with a losing SEE including quiet moves 
 
+        if (bestScore > -foundMate and mscore < okayThresholdScore){
+            break;
+        }
         if (bestScore > -foundMate and !board.seeGreater(move, -50)){
             continue;
         }
-        
+
         // Step 8) Make and update
         // Update appropriate history indices, make move, and prefetch TT
 

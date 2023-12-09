@@ -196,10 +196,10 @@ int main(){
 }
 /*
 .\cutechess-cli `
--engine conf="E107_ScoreLaterBetterProbcut" `
--engine conf="E104_BiasBuckets" `
+-engine conf="E115_Snapping" `
+-engine conf="E114_QSspeedup" `
 -each tc=6+0.06 timemargin=200 `
--openings file="C:\Program Files\Cute Chess\Chess Openings\openings-8ply-10k.pgn" `
+-openings file="C:\Program Files\Cute Chess\Chess Openings\openings-10ply-100k.pgn" `
 -games 2 `
 -rounds 25000 `
 -repeat 2 `
@@ -209,6 +209,89 @@ int main(){
 -concurrency 8 `
 -ratinginterval 10 `
 -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
+*/
+
+/*
+Score of E114_QSspeedup vs E107_ScoreLaterBetterProbcut: 283 - 207 - 1037  [0.525] 1527
+...      E114_QSspeedup playing White: 190 - 73 - 501  [0.577] 764
+...      E114_QSspeedup playing Black: 93 - 134 - 536  [0.473] 763
+...      White vs Black: 324 - 166 - 1037  [0.552] 1527
+Elo difference: 17.3 +/- 9.8, LOS: 100.0 %, DrawRatio: 67.9 %
+SPRT: llr 2.95 (100.0%), lbound -2.94, ubound 2.94 - H1 was accepted
+*/
+
+/*
+Score of E113_QSFP vs E107_ScoreLaterBetterProbcut: 915 - 926 - 3932  [0.499] 5773
+...      E113_QSFP playing White: 629 - 298 - 1960  [0.557] 2887
+...      E113_QSFP playing Black: 286 - 628 - 1972  [0.441] 2886
+...      White vs Black: 1257 - 584 - 3932  [0.558] 5773
+Elo difference: -0.7 +/- 5.1, LOS: 39.9 %, DrawRatio: 68.1 %
+SPRT: llr -2.37 (-80.5%), lbound -2.94, ubound 2.94
+*/
+
+/*
+Score of E112_CheckDecreaseReduction vs E107_ScoreLaterBetterProbcut: 422 - 437 - 1923  [0.497] 2782
+...      E112_CheckDecreaseReduction playing White: 297 - 148 - 946  [0.554] 1391
+...      E112_CheckDecreaseReduction playing Black: 125 - 289 - 977  [0.441] 1391
+...      White vs Black: 586 - 273 - 1923  [0.556] 2782
+Elo difference: -1.9 +/- 7.2, LOS: 30.4 %, DrawRatio: 69.1 %
+SPRT: llr -1.63 (-55.4%), lbound -2.94, ubound 2.94
+*/
+
+/*
+Score of E111_Razoring2 vs E107_ScoreLaterBetterProbcut: 2269 - 2234 - 9527  [0.501] 14030
+...      E111_Razoring2 playing White: 1504 - 749 - 4762  [0.554] 7015
+...      E111_Razoring2 playing Black: 765 - 1485 - 4765  [0.449] 7015
+...      White vs Black: 2989 - 1514 - 9527  [0.553] 14030
+Elo difference: 0.9 +/- 3.3, LOS: 69.9 %, DrawRatio: 67.9 %
+SPRT: llr -2.96 (-100.4%), lbound -2.94, ubound 2.94 - H0 was accepted
+
+Player: E111_Razoring2
+   "Draw by 3-fold repetition": 1536
+   "Draw by adjudication": 6978
+   "Draw by adjudication: maximal game length": 177
+   "Draw by fifty moves rule": 433
+   "Draw by insufficient mating material": 378
+   "Draw by stalemate": 25
+   "Loss: Black disconnects": 3
+   "Loss: Black mates": 744
+   "Loss: White disconnects": 5
+   "Loss: White mates": 1482
+   "No result": 7
+   "Win: Black mates": 765
+   "Win: White mates": 1504
+Player: E107_ScoreLaterBetterProbcut
+   "Draw by 3-fold repetition": 1536
+   "Draw by adjudication": 6978
+   "Draw by adjudication: maximal game length": 177
+   "Draw by fifty moves rule": 433
+   "Draw by insufficient mating material": 378
+   "Draw by stalemate": 25
+   "Loss: Black mates": 765
+   "Loss: White mates": 1504
+   "No result": 7
+   "Win: Black disconnects": 3
+   "Win: Black mates": 744
+   "Win: White disconnects": 5
+   "Win: White mates": 1482
+*/
+
+/*
+Score of E110_Razoring1 vs E107_ScoreLaterBetterProbcut: 317 - 362 - 1591  [0.490] 2270
+...      E110_Razoring1 playing White: 210 - 125 - 800  [0.537] 1135
+...      E110_Razoring1 playing Black: 107 - 237 - 791  [0.443] 1135
+...      White vs Black: 447 - 232 - 1591  [0.547] 2270
+Elo difference: -6.9 +/- 7.8, LOS: 4.2 %, DrawRatio: 70.1 %
+SPRT: llr -2.96 (-100.4%), lbound -2.94, ubound 2.94 - H0 was accepted
+*/
+
+/*
+Score of E108_SnapScore vs E107_ScoreLaterBetterProbcut: 197 - 253 - 943  [0.480] 1393
+...      E108_SnapScore playing White: 134 - 87 - 476  [0.534] 697
+...      E108_SnapScore playing Black: 63 - 166 - 467  [0.426] 696
+...      White vs Black: 300 - 150 - 943  [0.554] 1393
+Elo difference: -14.0 +/- 10.3, LOS: 0.4 %, DrawRatio: 67.7 %
+SPRT: llr -2.96 (-100.5%), lbound -2.94, ubound 2.94 - H0 was accepted
 */
 
 /*
