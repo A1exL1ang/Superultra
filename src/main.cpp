@@ -196,19 +196,46 @@ int main(){
 }
 /*
 .\cutechess-cli `
--engine conf="E115_Snapping" `
--engine conf="E114_QSspeedup" `
+-engine conf="E118_SEReduceCut" `
+-engine conf="E117_BetterIIR" `
 -each tc=6+0.06 timemargin=200 `
--openings file="C:\Program Files\Cute Chess\Chess Openings\openings-10ply-100k.pgn" `
+-openings file="C:\Program Files\Cute Chess\Chess Openings\openings-10ply-100k.pgn" order=random `
 -games 2 `
 -rounds 25000 `
 -repeat 2 `
 -maxmoves 200 `
 -draw movenumber=40 movecount=4 score=5 `
 -recover `
--concurrency 8 `
+-concurrency 10 `
 -ratinginterval 10 `
 -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
+*/
+
+/*
+Score of E117_BetterIIR vs E114_QSspeedup: 2017 - 1992 - 8602  [0.501] 12611
+...      E117_BetterIIR playing White: 1353 - 677 - 4275  [0.554] 6305
+...      E117_BetterIIR playing Black: 664 - 1315 - 4327  [0.448] 6306
+...      White vs Black: 2668 - 1341 - 8602  [0.553] 12611
+Elo difference: 0.7 +/- 3.4, LOS: 65.4 %, DrawRatio: 68.2 %
+SPRT: llr -2.98 (-101.1%), lbound -2.94, ubound 2.94 - H0 was accepted
+*/
+
+/*
+Score of E118_SEReduceCut vs E117_BetterIIR: 1946 - 1936 - 7363  [0.500] 11245
+...      E118_SEReduceCut playing White: 1313 - 680 - 3630  [0.556] 5623
+...      E118_SEReduceCut playing Black: 633 - 1256 - 3733  [0.445] 5622
+...      White vs Black: 2569 - 1313 - 7363  [0.556] 11245
+Elo difference: 0.3 +/- 3.8, LOS: 56.4 %, DrawRatio: 65.5 %
+SPRT: llr -2.96 (-100.4%), lbound -2.94, ubound 2.94 - H0 was accepted
+*/
+
+/*
+Score of E116_Cutnode vs E114_QSspeedup: 1067 - 1083 - 4676  [0.499] 6826
+...      E116_Cutnode playing White: 714 - 331 - 2369  [0.556] 3414
+...      E116_Cutnode playing Black: 353 - 752 - 2307  [0.442] 3412
+...      White vs Black: 1466 - 684 - 4676  [0.557] 6826
+Elo difference: -0.8 +/- 4.6, LOS: 36.5 %, DrawRatio: 68.5 %
+SPRT: llr -2.98 (-101.0%), lbound -2.94, ubound 2.94 - H0 was accepted
 */
 
 /*

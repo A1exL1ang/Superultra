@@ -234,7 +234,7 @@ template<bool pvNode> static Score qsearch(Score alpha, Score beta, Depth ply, p
     return bestScore;
 }
 
-template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, Depth depth, position &board, searchData &sd, searchStack *ss){
+template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta, Depth ply, Depth depth, position &board, searchData &sd, searchStack *ss){
     // 1) Leaf node and misc stuff
     // Update information and check if we should stop
 
@@ -297,7 +297,11 @@ template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, D
     // Step 4) TT move reduction (aka internal "iterative" reduction) (~5 elo)
     // If we don't have a TT move, we reduce by 1
 
-    if (depth >= 4 and !foundEntry and ss->excludedMove == nullOrNoMove){
+    if ((pvNode or cutNode)
+        and depth >= 4 
+        and !foundEntry 
+        and ss->excludedMove == nullOrNoMove)
+    {
         depth--;
     }
 
@@ -360,7 +364,7 @@ template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, D
         Depth R = 3 + (depth / 3) + std::min((ss->staticEval - beta) / 200, 3);
         
         // Search
-        Score score = -negamax<false>(-beta, -(beta - 1), ply + 1, depth - R, board, sd, ss + 1);
+        Score score = -negamax<false, !cutNode>(-beta, -(beta - 1), ply + 1, depth - R, board, sd, ss + 1);
 
         // Undo
         board.undoNullMove();
@@ -418,7 +422,7 @@ template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, D
             
             // If verified, normal search with reduced depth
             if (score >= probCutBeta){
-                score = -negamax<false>(-probCutBeta, -(probCutBeta - 1), ply + 1, depth - 4, board, sd, ss + 1);
+                score = -negamax<false, !cutNode>(-probCutBeta, -(probCutBeta - 1), ply + 1, depth - 4, board, sd, ss + 1);
             }
             
             // Undo last move
@@ -530,7 +534,7 @@ template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, D
             }
         }
 
-        // Step 15) Singular Extension and Multi-cut Pruning (~38 elo from SE + MCP, ~4 elo from DE, ~7 elo from NE)
+        // Step 15) Singular Extension and Multi-cut Pruning (~38 elo from SE + MCP, ~4 elo from DE, ~7 elo from Alpha NE)
         // If our TT move singularly performs better than all other moves at a reduced depth then we should extend
         // it. However, if a bunch of moves manage to fail high at a reduced depth then we can assume
         // that at least one of them will fail high at a normal depth
@@ -549,7 +553,7 @@ template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, D
             
             // Search all other moves -- call search on the same position but exclude the TT move
             ss->excludedMove = move;
-            Score singularScore = negamax<false>(singularBeta - 1, singularBeta, ply, singularDepth, board, sd, ss);
+            Score singularScore = negamax<false, cutNode>(singularBeta - 1, singularBeta, ply, singularDepth, board, sd, ss);
             ss->excludedMove = nullOrNoMove;
 
             // Our TT move is singular meaning it's better than all other moves by some margin
@@ -573,6 +577,13 @@ template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, D
             // Probable Multicut (since TT move is greater/equal to beta and some other move is greater/equal to singularBeta)
             else if (tte.score >= beta){
                 extension = -1 - !pvNode;
+            }
+
+            // If we predict we are gonna fail high and another move has score either slightly less or greater 
+            // than TT score then we are in a situation similar to probable multicut
+             
+            else if (cutNode){
+                extension = -1;
             }
             
             // Both our TT score and the "second" best score (at a reduced depth) fail to raise alpha
@@ -617,7 +628,7 @@ template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, D
             
             // Increase reduction if we aren't improving
             R += !improving;
-            
+
             // If quiet, adjust reduction based on history
             if (isQuiet){
                 R -= std::clamp(history / 4096, -2, 2);
@@ -628,7 +639,7 @@ template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, D
 
             // Reduce as long as there is some reduction
             if (R >= 2){
-                score = -negamax<false>(-(alpha + 1), -alpha, ply + 1, depth + extension - R, board, sd, ss + 1);
+                score = -negamax<false, !cutNode>(-(alpha + 1), -alpha, ply + 1, depth + extension - R, board, sd, ss + 1);
             }
         }
 
@@ -638,16 +649,16 @@ template<bool pvNode> static Score negamax(Score alpha, Score beta, Depth ply, D
         if (score > alpha){
             // Fully evaluate node if first move
             if (movesSeen == 1){
-                score = -negamax<true>(-beta, -alpha, ply + 1, depth + extension - 1, board, sd, ss + 1);
+                score = -negamax<true, false>(-beta, -alpha, ply + 1, depth + extension - 1, board, sd, ss + 1);
             }
             
             // Otherwise do zero window search: [alpha, alpha + 1]
             else{ 
-                score = -negamax<false>(-(alpha + 1), -alpha, ply + 1, depth + extension - 1, board, sd, ss + 1); 
+                score = -negamax<false, !cutNode>(-(alpha + 1), -alpha, ply + 1, depth + extension - 1, board, sd, ss + 1); 
                         
                 // Zero window inconclusive (note that its only possible to enter this if pvNode)
                 if (score > alpha and score < beta){
-                    score = -negamax<true>(-beta, -alpha, ply + 1, depth + extension - 1, board, sd, ss + 1);
+                    score = -negamax<true, false>(-beta, -alpha, ply + 1, depth + extension - 1, board, sd, ss + 1);
                 }
             }
         }
@@ -738,7 +749,7 @@ Score aspirationWindowSearch(Score prevEval, Depth depth, position &board, searc
 
     while (true){
         // Get score
-        Score score = negamax<true>(alpha, beta, 0, depth, board, sd, ss);
+        Score score = negamax<true, false>(alpha, beta, 0, depth, board, sd, ss);
 
         // Out of time
         if (sd.stopped){
