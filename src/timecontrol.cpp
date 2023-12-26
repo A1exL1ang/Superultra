@@ -15,6 +15,13 @@ void timeMan::init(Color col, uciSearchLims uci){
     stability = 0;
     startTime = getTime();
 
+    // If no time is given assume infinite
+    infinite = uci.infinite or (!uci.timeLeft[col] and !uci.moveTime);
+    fixedMoveTime = uci.moveTime;
+
+    if (infinite or fixedMoveTime)
+        return;
+    
     // X base time, Y increment, Z moves till reset (Z is 50 if there is no time reset)
 
     int mtg = (uci.movesToGo == 0) ? 50 : uci.movesToGo;
@@ -22,11 +29,15 @@ void timeMan::init(Color col, uciSearchLims uci){
     TimePoint totalTime = uci.timeLeft[col] + (uci.timeIncr[col] * mtg) - moveLag * mtg;
     
     optimalTime = averageTime = std::clamp(static_cast<double>(totalTime) / mtg, (0.95 * uci.timeLeft[col]) / mtg, 0.8 * uci.timeLeft[col]);
-
+    
     maximumTime = std::min(5.5 * averageTime, 0.8 * uci.timeLeft[col]);
 }
 
 void timeMan::update(Depth depthSearched, Move bestMove, Score score, double percentTimeSpentOnNonBest){
+    // Don't do anything if we infinitely searching or searching for a fixed time
+    if (infinite or fixedMoveTime)
+        return;
+
     // Update stability
 
     stability = (bestMove != lastBestMove) ? 1 : std::min(stability + 1, 10);

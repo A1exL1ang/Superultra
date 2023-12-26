@@ -235,7 +235,7 @@ static uciSearchLims proccessGo(std::istringstream &iss){
     uciSearchLims lims = {};
 
     while (iss >> token){
-        // Only searches the moves give; must be the last command
+        // Only searches the moves given; must be the last command
         if (token == "searchmoves"){
             while (iss >> token){
 
@@ -243,7 +243,7 @@ static uciSearchLims proccessGo(std::istringstream &iss){
         }
         // Keep searching until stop command
         else if (token == "infinite"){
-
+            lims.infinite = true;
         }
         // Time left for white
         else if (token == "wtime"){
@@ -265,15 +265,21 @@ static uciSearchLims proccessGo(std::istringstream &iss){
         else if (token == "movestogo"){
             iss >> lims.movesToGo;
         }
-        // Limit depth
+        // Search for specific amount of time
+        else if (token == "movetime"){
+            iss >> lims.moveTime;
+        }
+        // Limit depth (be careful with reading it since we don't want to read it in as a char)
         else if (token == "depth"){
-            
+            int tempVal;
+            iss >> tempVal;
+            lims.depthLim = static_cast<Depth>(tempVal);
         }
         // Limit nodes
         else if (token == "nodes"){
-            
+            iss >> lims.nodeLim;
         }
-        // Ponder
+        // Ponder (not supported)
         else if (token == "ponder"){
             
         }
@@ -337,6 +343,31 @@ static void setPos(std::istringstream &iss){
         }
     }
 }
+
+/*
+void bench(){
+    TimePoint st = getTime();
+    uint64 totalNodes = 0;
+
+    for (std::string fen : benchFens){
+        board.readFen(fen);
+        searchData sd = {};
+
+        // Run a series of low time searches
+        uciSearchLims lims;
+        lims.movesToGo = 1;
+        lims.timeLeft[board.getTurn()] = 100;
+        forcesetTM(board.getTurn(), lims);
+
+        // Search
+        iterativeDeepening(board, sd);
+        totalNodes += sd.nodes;
+        std::cout<<sd.nodes<<std::endl;
+    }
+    TimePoint en = getTime();
+    std::cout<<totalNodes<<" nodes "<<totalNodes / (en - st + 1) * 1000<<" nps"<<std::endl;
+}
+*/
 
 void doLoop(){
     std::thread searcherThread;

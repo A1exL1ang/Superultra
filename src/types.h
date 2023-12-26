@@ -34,7 +34,7 @@ using Score = int16;
 using Movescore = int32;
 using NNUEWeight = int16;
 
-using TimePoint = uint64;
+using TimePoint = int64;
 using Bitboard = uint64;
 using TTKey = uint64;
 

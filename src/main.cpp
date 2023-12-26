@@ -10,6 +10,7 @@
 
 #include <chrono>
 #include <vector>
+#include <fstream>
 static position perftBoard;
 uint64 tot = 0;
 uint64 cnt = 0;
@@ -115,7 +116,13 @@ static uint64 perft(Depth depth, Depth depthLim){
     return leaves;
 }
 
-int main(){
+static uint64 seed1 = 1928777382391231823ULL;
+
+static inline uint64 genRand1(){
+    return seed1 = seed1 * 6364136223846793005ULL + 1442695040888963407ULL;
+}
+
+int main(int argc, char** argv){
     initLineBB();
     initMagicCache();
     initNNUEWeights();
@@ -124,11 +131,13 @@ int main(){
 
     // Default settings
     globalTT.setSize(16);
-
-
-
     setThreadCount(1);
     
+    if (argc > 1 and std::string{argv[1]} == "bench"){
+        // bench();
+        return 0;
+    }
+
     /*
     importCheckpoint("checkpoint_886189998_336.bin");
     exportNetworkQuantized();
@@ -140,6 +149,21 @@ int main(){
         doLoop();
         return 0;
     }
+
+    std::ifstream ss("C:\\Users\\allen\\Documents\\CPU\\test.txt");
+    
+    int counter = 0;
+    while (counter <= 100){
+        std::string fen;
+        std::getline(ss, fen);
+        int pos = fen.find('|');
+        fen = fen.substr(0, pos - 1);
+        if (genRand1() % 10000 == 0){
+            std::cout<<"\""<<fen<<"\","<<std::endl;
+            counter++;
+        }
+    }
+    return 0;
 
     /*
     #include <chrono>
@@ -196,8 +220,8 @@ int main(){
 }
 /*
 .\cutechess-cli `
+-engine conf="E120_MoreFunctionality" `
 -engine conf="E118_SEReduceCut" `
--engine conf="E117_BetterIIR" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-10ply-100k.pgn" order=random `
 -games 2 `
@@ -209,6 +233,24 @@ int main(){
 -concurrency 10 `
 -ratinginterval 10 `
 -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
+*/
+
+/*
+Score of V1.0 vs E118_SEReduceCut: 36 - 120 - 172  [0.372] 328
+...      V1.0 playing White: 23 - 43 - 98  [0.439] 164
+...      V1.0 playing Black: 13 - 77 - 74  [0.305] 164
+...      White vs Black: 100 - 56 - 172  [0.567] 328
+Elo difference: -91.0 +/- 25.8, LOS: 0.0 %, DrawRatio: 52.4 %
+SPRT: llr -2.95 (-100.1%), lbound -2.94, ubound 2.94 - H0 was accepted
+*/
+
+/*
+Score of E119_LMRdoublecut vs E118_SEReduceCut: 1434 - 1443 - 5582  [0.499] 8459
+...      E119_LMRdoublecut playing White: 978 - 506 - 2745  [0.556] 4229
+...      E119_LMRdoublecut playing Black: 456 - 937 - 2837  [0.443] 4230
+...      White vs Black: 1915 - 962 - 5582  [0.556] 8459
+Elo difference: -0.4 +/- 4.3, LOS: 43.3 %, DrawRatio: 66.0 %
+SPRT: llr -2.96 (-100.4%), lbound -2.94, ubound 2.94 - H0 was accepted
 */
 
 /*

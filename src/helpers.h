@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include <chrono>
 
 // Gets the piece of an encoded piece
 inline Piece getPieceType(Piece encPiece){
@@ -77,4 +78,9 @@ inline bool isInGrid(Rank i, File j){
 // Get the square representing (rank, file)
 inline Square posToSquare(Rank i, File j){
     return i * 8 + j;
+}
+
+// Get current time in ms
+inline TimePoint getTime(){
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }

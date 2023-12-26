@@ -8,6 +8,7 @@
 #include <cstring>
 
 static timeMan tm;
+static uint64 nodeLim;
 static std::vector<std::thread> threads;
 static std::vector<searchData> threadSD;
 static Depth lmrReduction[maximumPly + 5][maxMovesInTurn];
@@ -58,6 +59,17 @@ void endSearch(){
 
 static inline void checkEnd(searchData &sd){
     sd.stopped = tm.stopDuringSearch();
+
+    // If we have a node limit and are at thread 0, check our node count
+    if (nodeLim and sd.threadId == 0){
+        uint64 nodeCount = 0;
+        for (int i = 0; i < threadCount; i++){
+            nodeCount += threadSD[i].nodes;
+        }
+        if (nodeCount >= nodeLim){
+            sd.stopped = true;
+        }
+    }
 }
 
 static inline void adjustEval(ttEntry &tte, Score &staticEval){
@@ -861,10 +873,10 @@ void selectBestThread(){
     std::cout<<"bestmove "<<bestResult.pvMoves[0]<<std::endl;
 }
 
-void iterativeDeepening(position board, searchData &sd){
+void iterativeDeepening(position board, searchData &sd, Depth depthLim){
     Score score = noScore;
 
-    for (Depth startingDepth = 1; startingDepth <= maximumPly; startingDepth++){
+    for (Depth startingDepth = 1; startingDepth <= depthLim; startingDepth++){
         // Search
         sd.selDepth = 0;
         score = aspirationWindowSearch(score, startingDepth, board, sd);
@@ -900,17 +912,23 @@ void iterativeDeepening(position board, searchData &sd){
 }
 
 void beginSearch(position board, uciSearchLims lims){
+    // Deal with node and depth limits (if no depth limit, force it to be maximumPly)
+    nodeLim = lims.nodeLim;
+
+    if (!lims.depthLim)
+        lims.depthLim = maximumPly;
+
     // Init
     tm.init(board.getTurn(), lims);
     resetAllSearchDataNonHistory();
 
     // Launch threadCount - 1 helper threads (start our indexing from 1)
     for (int i = 1; i < threadCount; i++){
-        threads[i] = std::thread(iterativeDeepening, board, std::ref(threadSD[i]));
+        threads[i] = std::thread(iterativeDeepening, board, std::ref(threadSD[i]), lims.depthLim);
     }
 
     // Launch main thread
-    iterativeDeepening(board, threadSD[0]);
+    iterativeDeepening(board, threadSD[0], lims.depthLim);
     
     // Once our main thread is done, stop and join helper threads
     endSearch();
