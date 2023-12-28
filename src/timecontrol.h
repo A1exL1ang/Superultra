@@ -3,6 +3,7 @@
 #include "types.h"
 #include "helpers.h"
 #include "uci.h"
+#include "search.h"
 #include <chrono>
 
 struct timeMan{
@@ -30,24 +31,27 @@ struct timeMan{
         return getTime() - startTime;
     }
     inline bool stopAfterSearch(){
-        if (infinite)
+        if (pondering){
             return false;
-
-        if (fixedMoveTime){
+        }
+        else if (infinite){
+            return false;
+        }
+        else if (fixedMoveTime){
             return timeSpent() >= fixedMoveTime;
         }
-
         return forceStop or timeSpent() >= optimalTime;
     }
     inline bool stopDuringSearch(){
-        if (infinite){
+        if (pondering){
             return false;
         }
-
-        if (fixedMoveTime){
+        else if (infinite){
+            return false;
+        }
+        else if (fixedMoveTime){
             return timeSpent() >= fixedMoveTime;
         }
-
         return forceStop or timeSpent() >= maximumTime;
     }
 };

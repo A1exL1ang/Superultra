@@ -220,7 +220,7 @@ int main(int argc, char** argv){
 }
 /*
 .\cutechess-cli `
--engine conf="E120_MoreFunctionality" `
+-engine conf="E131_Ponder" `
 -engine conf="E118_SEReduceCut" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-10ply-100k.pgn" order=random `
@@ -233,6 +233,23 @@ int main(int argc, char** argv){
 -concurrency 10 `
 -ratinginterval 10 `
 -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
+*/
+
+/*
+Score of E131_Ponder vs E118_SEReduceCut: 4207 - 4292 - 16127  [0.498] 24626
+...      E131_Ponder playing White: 2803 - 1429 - 8083  [0.556] 12315
+...      E131_Ponder playing Black: 1404 - 2863 - 8044  [0.441] 12311
+...      White vs Black: 5666 - 2833 - 16127  [0.558] 24626
+Elo difference: -1.2 +/- 2.5, LOS: 17.8 %, DrawRatio: 65.5 %
+*/
+
+/*
+Score of E131_Ponder vs E118_SEReduceCut: 126 - 59 - 383  [0.559] 568
+...      E131_Ponder playing White: 74 - 20 - 191  [0.595] 285
+...      E131_Ponder playing Black: 52 - 39 - 192  [0.523] 283
+...      White vs Black: 113 - 72 - 383  [0.536] 568
+Elo difference: 41.2 +/- 16.2, LOS: 100.0 %, DrawRatio: 67.4 %
+SPRT: llr 2.94 (100.0%), lbound -2.94, ubound 2.94 - H1 was accepted
 */
 
 /*

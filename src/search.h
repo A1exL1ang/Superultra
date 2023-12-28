@@ -7,6 +7,11 @@
 #include "uci.h"
 #include <cstring>
 
+// Global pondering flag. Note that pondering is only ended after stop / ponderhit / quit
+// command so we should keep the logic seperate from endSearch
+
+extern bool pondering;
+
 struct searchStack{
     Score staticEval;
     Move excludedMove;

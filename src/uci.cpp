@@ -227,6 +227,7 @@ static void printInfo(){
     std::cout<<"id author Alexander Liang"<<std::endl;
     std::cout<<"option name Hash type spin default 16 min 1 max 2048"<<std::endl;
     std::cout<<"option name Threads type spin default 1 min 1 max 256"<<std::endl;
+    std::cout<<"option name Ponder type check default false"<<std::endl;
     std::cout<<"uciok"<<std::endl;
 }
 
@@ -234,15 +235,13 @@ static uciSearchLims proccessGo(std::istringstream &iss){
     std::string token;
     uciSearchLims lims = {};
 
-    while (iss >> token){
-        // Only searches the moves given; must be the last command
-        if (token == "searchmoves"){
-            while (iss >> token){
+    // End search just in case
+    endSearch();
+    pondering = false;
 
-            }
-        }
+    while (iss >> token){
         // Keep searching until stop command
-        else if (token == "infinite"){
+        if (token == "infinite"){
             lims.infinite = true;
         }
         // Time left for white
@@ -281,7 +280,7 @@ static uciSearchLims proccessGo(std::istringstream &iss){
         }
         // Ponder (not supported)
         else if (token == "ponder"){
-            
+            pondering = true;
         }
     }
     return lims;
@@ -408,9 +407,23 @@ void doLoop(){
             }
             searcherThread = std::thread(beginSearch, board, proccessGo(iss));
         }
+        // The guessed move has been played so switch from ponder search to normal 
+        // search (don't reset tm). Also note that the blank gui screen is a result of
+        // ponderhit resetting the screen so if you pondered for long enough then the
+        // moment you finish / end the search you will print out the best move and the
+        // screen will reset to pondering the next move
+
+        else if (token == "ponderhit"){
+            pondering = false;
+
+            if (searcherThread.joinable()){
+                searcherThread.join();
+            }
+        }
         // Stop the search
         else if (token == "stop"){
             endSearch();
+            pondering = false;
 
             if (searcherThread.joinable()){
                 searcherThread.join();
@@ -419,7 +432,8 @@ void doLoop(){
         // End the program
         else if (token == "quit"){
             endSearch();
-            
+            pondering = false;
+
             if (searcherThread.joinable()){
                 searcherThread.join();
             }

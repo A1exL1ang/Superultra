@@ -13,6 +13,8 @@ static std::vector<std::thread> threads;
 static std::vector<searchData> threadSD;
 static Depth lmrReduction[maximumPly + 5][maxMovesInTurn];
 
+bool pondering = false;
+
 void initLMR(){
     for (Depth depth = 1; depth <= maximumPly; depth++){
         for (int i = 0; i < maxMovesInTurn; i++){
@@ -870,7 +872,12 @@ void selectBestThread(){
     }
     // Print the final result of the search
     printSearchResults(bestResult);
-    std::cout<<"bestmove "<<bestResult.pvMoves[0]<<std::endl;
+    std::cout<<"bestmove "<<bestResult.pvMoves[0];
+
+    if (bestResult.pvMoves.size() >= 2){
+        std::cout<<" ponder "<<bestResult.pvMoves[1];
+    }
+    std::cout<<std::endl;
 }
 
 void iterativeDeepening(position board, searchData &sd, Depth depthLim){
@@ -913,6 +920,8 @@ void iterativeDeepening(position board, searchData &sd, Depth depthLim){
 
 void beginSearch(position board, uciSearchLims lims){
     // Deal with node and depth limits (if no depth limit, force it to be maximumPly)
+    // Remember that 0 means the limit has not been set
+
     nodeLim = lims.nodeLim;
 
     if (!lims.depthLim)
@@ -937,6 +946,9 @@ void beginSearch(position board, uciSearchLims lims){
         threads[i].join();
     }
     
+    // Wait until we have officially been asked to stop pondering
+    while (pondering);
+
     // Report and update
     selectBestThread();
     globalTT.incrementAge();
