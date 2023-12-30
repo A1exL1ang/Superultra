@@ -15,10 +15,10 @@ LDFLAGS = -Wl,--stack=8589934592 -Wl,--no-whole-archive -static
 # Append .exe and use del if on Windows
 ifeq ($(OS), Windows_NT)
     NAME = Superultra.exe
-	RM = del -f
+    RM = del -f
 else
     NAME = Superultra
-	RM = rm -f
+    RM = rm -f
 endif
 
 # All .o ---> executable
