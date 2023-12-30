@@ -45,6 +45,7 @@ info depth 23 seldepth 37 score cp 31 nodes 17589889 time 6839 nps 2571993 hashf
 info depth 24 seldepth 36 score cp 33 nodes 26221043 time 10400 nps 2521251 hashfull 1000 pv e2e4 e7e6 d2d4 d7d5 b1c3 g8f6 c1g5 d5e4 c3e4 f8e7 g5f6 e7f6 c2c3 b8d7 g1f3 e8g8 f1d3 e6e5 e4f6 d8f6 e1g1 e5d4 c3d4 f6b6 d1c2 d7f6
 */
 
+// info depth 20 seldepth 40 score cp -92 nodes 3418410 time 1783 nps 1917213 hashfull 856 pv e2a6 b4c3 d2c3 h3g2 f3g2 e6d5 e1g1 f6e4 e5c6 d7c6 c3g7 h8h7 f2f3 h7g7 f3e4 e8f8 e4d5 c6d5 a1e1 e7c5 g1h1 a8e8 e1e8 f8e8
 
 // NN eval: 22.834187ns
 // NN average: 35.858618ns
@@ -129,10 +130,14 @@ int main(int argc, char** argv){
     initLMR();
     initTT();
 
+    
     // Default settings
     globalTT.setSize(16);
+
+
     setThreadCount(1);
     
+
     if (argc > 1 and std::string{argv[1]} == "bench"){
         // bench();
         return 0;
@@ -149,7 +154,8 @@ int main(int argc, char** argv){
         doLoop();
         return 0;
     }
-
+    std::cout<<"hi"<<std::endl;
+    /*
     std::ifstream ss("C:\\Users\\allen\\Documents\\CPU\\test.txt");
     
     int counter = 0;
@@ -164,7 +170,8 @@ int main(int argc, char** argv){
         }
     }
     return 0;
-
+    */
+   
     /*
     #include <chrono>
     extern uint64 cnt;
@@ -220,8 +227,8 @@ int main(int argc, char** argv){
 }
 /*
 .\cutechess-cli `
+-engine conf="E133_NewMake" `
 -engine conf="E131_Ponder" `
--engine conf="E118_SEReduceCut" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-10ply-100k.pgn" order=random `
 -games 2 `
@@ -232,8 +239,10 @@ int main(int argc, char** argv){
 -recover `
 -concurrency 10 `
 -ratinginterval 10 `
--sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
 */
+
+// -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
+
 
 /*
 Score of E131_Ponder vs E118_SEReduceCut: 4207 - 4292 - 16127  [0.498] 24626

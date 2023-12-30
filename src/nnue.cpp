@@ -1,4 +1,5 @@
 #include <immintrin.h>
+#include <cstring>
 #include "incbin/incbin.h"
 #include "nnue.h"
 #include "types.h"

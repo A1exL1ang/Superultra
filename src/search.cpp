@@ -375,7 +375,7 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
         board.makeNullMove();
         globalTT.prefetch(board.getHash());
         
-        Depth R = 3 + (depth / 3) + std::min((ss->staticEval - beta) / 200, 3);
+        Depth R = 3 + (depth / 3) + std::min(static_cast<int>(ss->staticEval - beta) / 200, 3);
         
         // Search
         Score score = -negamax<false, !cutNode>(-beta, -(beta - 1), ply + 1, depth - R, board, sd, ss + 1);
@@ -481,7 +481,7 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
         }
 
         Score score = checkMateScore;
-        Movescore history;
+        Movescore history = 0;
         Depth extension = 0;
         uint64 nodesBefore = sd.nodes;
 
