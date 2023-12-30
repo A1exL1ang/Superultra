@@ -150,7 +150,7 @@ int main(int argc, char** argv){
     */
 
     // Begin the UCI Loop
-    if (false){
+    if (true){
         doLoop();
         return 0;
     }
@@ -227,8 +227,8 @@ int main(int argc, char** argv){
 }
 /*
 .\cutechess-cli `
+-engine conf="E134_ScoreFluctuation" `
 -engine conf="E133_NewMake" `
--engine conf="E131_Ponder" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-10ply-100k.pgn" order=random `
 -games 2 `
@@ -243,6 +243,21 @@ int main(int argc, char** argv){
 
 // -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
 
+/*
+Score of E134_ScoreFluctuation vs E133_NewMake: 1379 - 1356 - 5310  [0.501] 8045
+...      E134_ScoreFluctuation playing White: 941 - 431 - 2649  [0.563] 4021
+...      E134_ScoreFluctuation playing Black: 438 - 925 - 2661  [0.439] 4024
+...      White vs Black: 1866 - 869 - 5310  [0.562] 8045
+Elo difference: 1.0 +/- 4.4, LOS: 67.0 %, DrawRatio: 66.0 %
+*/
+
+/*
+Score of E133_NewMake vs E131_Ponder: 1587 - 1551 - 5958  [0.502] 9096
+...      E133_NewMake playing White: 1070 - 499 - 2979  [0.563] 4548
+...      E133_NewMake playing Black: 517 - 1052 - 2979  [0.441] 4548
+...      White vs Black: 2122 - 1016 - 5958  [0.561] 9096
+Elo difference: 1.4 +/- 4.2, LOS: 74.0 %, DrawRatio: 65.5 %
+*/
 
 /*
 Score of E131_Ponder vs E118_SEReduceCut: 4207 - 4292 - 16127  [0.498] 24626

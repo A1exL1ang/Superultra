@@ -47,11 +47,21 @@ void timeMan::update(Depth depthSearched, Move bestMove, Score score, double per
 
     double stabilityScale = 1.2 - 0.05 * stability;
 
-    // Exponentially scale time based on score fluctuations (formula from Stash Bot)
-    // Range is [0.5, 2] (we scale up when score falls and down otherwise)
+    // Linearly scale based on score fluctuation. Note that we should be more inclined
+    // to increase time if our score suddenly decreases so we handle the score
+    // increase and decrease cases seperately
 
-    int diff = score - lastScore;
-    double scoreChangeScale = pow(2, -1 * std::clamp(diff / 100.0, -1.0, 1.0));
+    double absdiff = abs(score - lastScore);
+    double scoreChangeScale = 1;
+
+    // Score increase
+    if (score >= lastScore){
+        scoreChangeScale = 0.75 + 0.5 * std::min(absdiff, 30.0) / 30.0;
+    }
+    // Score decrease
+    else{
+        scoreChangeScale = 0.75 + 0.5 * std::min(absdiff, 15.0) / 15.0;
+    }
     
     // Linearly scale time based on time spent on non-best move nodes 
     // Note that the larger the value is the more complex our position is so the higher our scale should be
