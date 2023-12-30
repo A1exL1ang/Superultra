@@ -150,7 +150,7 @@ int main(int argc, char** argv){
     */
 
     // Begin the UCI Loop
-    if (true){
+    if (false){
         doLoop();
         return 0;
     }
