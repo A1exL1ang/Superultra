@@ -227,8 +227,8 @@ int main(int argc, char** argv){
 }
 /*
 .\cutechess-cli `
+-engine conf="E139_EvasionBonus1" `
 -engine conf="E134_ScoreFluctuation" `
--engine conf="E133_NewMake" `
 -each tc=6+0.06 timemargin=200 `
 -openings file="C:\Program Files\Cute Chess\Chess Openings\openings-10ply-100k.pgn" order=random `
 -games 2 `
@@ -239,9 +239,46 @@ int main(int argc, char** argv){
 -recover `
 -concurrency 10 `
 -ratinginterval 10 `
+-sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
 */
 
 // -sprt elo0=0 elo1=5 alpha=0.05 beta=0.05
+
+/*
+Score of E138_EvasionBonus vs E134_ScoreFluctuation: 196 - 251 - 955  [0.480] 1402
+...      E138_EvasionBonus playing White: 131 - 84 - 487  [0.533] 702
+...      E138_EvasionBonus playing Black: 65 - 167 - 468  [0.427] 700
+...      White vs Black: 298 - 149 - 955  [0.553] 1402
+Elo difference: -13.6 +/- 10.2, LOS: 0.5 %, DrawRatio: 68.1 %
+SPRT: llr -2.96 (-100.4%), lbound -2.94, ubound 2.94 - H0 was accepted
+*/
+
+/*
+Score of E137_PawnBonus1 vs E134_ScoreFluctuation: 307 - 363 - 1304  [0.486] 1974
+...      E137_PawnBonus1 playing White: 205 - 124 - 658  [0.541] 987
+...      E137_PawnBonus1 playing Black: 102 - 239 - 646  [0.431] 987
+...      White vs Black: 444 - 226 - 1304  [0.555] 1974
+Elo difference: -9.9 +/- 8.9, LOS: 1.5 %, DrawRatio: 66.1 %
+SPRT: llr -2.98 (-101.4%), lbound -2.94, ubound 2.94 - H0 was accepted
+*/
+
+/*
+Score of E136_GoodPawnPushBonus vs E134_ScoreFluctuation: 798 - 809 - 3151  [0.499] 4758
+...      E136_GoodPawnPushBonus playing White: 529 - 259 - 1592  [0.557] 2380
+...      E136_GoodPawnPushBonus playing Black: 269 - 550 - 1559  [0.441] 2378
+...      White vs Black: 1079 - 528 - 3151  [0.558] 4758
+Elo difference: -0.8 +/- 5.7, LOS: 39.2 %, DrawRatio: 66.2 %
+SPRT: llr -1.93 (-65.5%), lbound -2.94, ubound 2.94
+*/
+
+/*
+Score of E135_Threats vs E134_ScoreFluctuation: 361 - 413 - 1543  [0.489] 2317
+...      E135_Threats playing White: 237 - 136 - 786  [0.544] 1159
+...      E135_Threats playing Black: 124 - 277 - 757  [0.434] 1158
+...      White vs Black: 514 - 260 - 1543  [0.555] 2317
+Elo difference: -7.8 +/- 8.2, LOS: 3.1 %, DrawRatio: 66.6 %
+SPRT: llr -2.96 (-100.6%), lbound -2.94, ubound 2.94 - H0 was accepted
+*/
 
 /*
 Score of E134_ScoreFluctuation vs E133_NewMake: 1379 - 1356 - 5310  [0.501] 8045

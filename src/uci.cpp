@@ -343,31 +343,6 @@ static void setPos(std::istringstream &iss){
     }
 }
 
-/*
-void bench(){
-    TimePoint st = getTime();
-    uint64 totalNodes = 0;
-
-    for (std::string fen : benchFens){
-        board.readFen(fen);
-        searchData sd = {};
-
-        // Run a series of low time searches
-        uciSearchLims lims;
-        lims.movesToGo = 1;
-        lims.timeLeft[board.getTurn()] = 100;
-        forcesetTM(board.getTurn(), lims);
-
-        // Search
-        iterativeDeepening(board, sd);
-        totalNodes += sd.nodes;
-        std::cout<<sd.nodes<<std::endl;
-    }
-    TimePoint en = getTime();
-    std::cout<<totalNodes<<" nodes "<<totalNodes / (en - st + 1) * 1000<<" nps"<<std::endl;
-}
-*/
-
 void doLoop(){
     std::thread searcherThread;
 
