@@ -59,7 +59,7 @@ make
 * (768x10-->512)x2-->1 architecture
   *  Perspective
   *  Crelu Activation Function
-  *  10 King Buckets
+  *  10 King Buckets (mirrored)
   *  8 Output Weight Buckets
 
 ## More About the NNUE
