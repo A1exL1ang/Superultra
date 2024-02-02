@@ -152,7 +152,7 @@ Score neuralNetwork::eval(Color col, int8 pieceCount){
     const auto vectorWeightBotPtr = reinterpret_cast<__m256i*>(&W2[outputWeightsIndex + hiddenHalf]);
 
     // The only thing i'll note here is that _mm256_madd_epi16(a, b) is very useful.
-    // The function takes in two int16 vectors and multiplies eveyr pair of elems and then
+    // The function takes in two int16 vectors and multiplies every pair of elems and then
     // adds adjacent elements so you are finally left with a int32 vector
 
     for (int i = 0; i < hiddenHalf / 16; i++){
