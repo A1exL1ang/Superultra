@@ -1,0 +1,8 @@
+all:
+	 aarch64-linux-android21-clang++ -o superultra_20_64_ja glob.cpp -march=armv8-a+fp+simd+crypto+crc -mfpu=neon -ftree-vectorize \
+	-lm -latomic -m64 -stdlib=libc++ -fPIE -static-libstdc++ -pie -std=c++20 -flto=full -Ofast -pipe -finline-functions \
+	-pthread -mpopcnt -fuse-ld=lld -MMD -MP -Wl,-z,stack-size=16777216
+	
+	
+	 
+	
