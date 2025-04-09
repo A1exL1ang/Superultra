@@ -9,14 +9,13 @@ DEP = $(SRC:.cpp=.d)
 ARCH ?= native
 ARCHFLAGS = -march=$(ARCH) -mtune=$(ARCH)
 
-# Note: stack size is adjusted here
-LDFLAGS = -Wl,--stack=8589934592 -Wl,--no-whole-archive -static
-
-# Append .exe and use del if on Windows
+# Append .exe, use del, and adjust stack size only if on Windows
 ifeq ($(OS), Windows_NT)
+	LDFLAGS = -Wl,--stack=33554432,--no-whole-archive -static
 	NAME = Superultra-2.0.exe
 	RM = del -f
 else
+	LDFLAGS = -Wl,--no-whole-archive -static
 	NAME = Superultra-2.0
 	RM = rm -f
 endif
