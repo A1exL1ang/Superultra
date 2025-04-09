@@ -11,7 +11,7 @@ ARCHFLAGS = -march=$(ARCH) -mtune=$(ARCH)
 
 # Append .exe, use del, and adjust stack size only if on Windows
 ifeq ($(OS), Windows_NT)
-	LDFLAGS = -Wl,--stack=33554432,--no-whole-archive -static
+	LDFLAGS = -Wl,--stack=8388608,--no-whole-archive -static
 	NAME = Superultra-2.0.exe
 	RM = del -f
 else

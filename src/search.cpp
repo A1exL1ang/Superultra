@@ -6,6 +6,7 @@
 #include <thread>
 #include <vector>
 #include <cstring>
+#include <memory>
 
 static timeMan tm;
 static uint64 nodeLim;
@@ -28,8 +29,8 @@ void setThreadCount(int tds){
 
     // Vector assign doesn't work with threads
     while (static_cast<int>(threads.size()) < tds){
-        threads.push_back({});
-        threadSD.push_back({});
+        threads.emplace_back();
+        threadSD.emplace_back();
     }
     while (static_cast<int>(threads.size()) > tds){
         threads.pop_back();
@@ -743,8 +744,8 @@ Score aspirationWindowSearch(Score prevEval, Depth depth, Position &board, Searc
 
     // Init window and stack
     int delta = 14;
-    SearchStack searchArr[MAX_PLY + 5];
-    SearchStack *ss = searchArr + 2;
+    std::unique_ptr<SearchStack[]> searchArr = std::make_unique<SearchStack[]>(MAX_PLY + 5);
+    SearchStack* ss = searchArr.get() + 2;
     
     for (int i = 0; i < MAX_PLY + 5; i++){
         searchArr[i].excludedMove = NULL_OR_NO_MOVE;
