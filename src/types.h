@@ -5,17 +5,17 @@
 #include <string>
 
 // Shortcuts
-using int8 = int_fast8_t;
-using uint8 = uint_fast8_t;
+using int8 = int8_t;
+using uint8 = uint8_t;
 
-using int16 = int_fast16_t;
-using uint16 = uint_fast16_t;
+using int16 = int16_t;
+using uint16 = uint16_t;
 
-using int32 = int_fast32_t;
-using uint32 = uint_fast32_t;
+using int32 = int32_t;
+using uint32 = uint32_t;
 
-using int64 = int_fast64_t;
-using uint64 = uint_fast64_t;
+using int64 = int64_t;
+using uint64 = uint64_t;
 
 // Aliases to help keep everything consistent
 using Color = bool;
@@ -39,62 +39,62 @@ using Bitboard = uint64;
 using TTKey = uint64;
 
 // Pieces: Bit 0 is the color, Bits [1...3] is the piece
-const Piece noPiece = 0;
-const Piece pawn = 1;
-const Piece knight = 2;
-const Piece bishop = 3;
-const Piece rook = 4;
-const Piece queen = 5;
-const Piece king = 6;
+const Piece NO_PIECE = 0;
+const Piece PAWN = 1;
+const Piece KNIGHT = 2;
+const Piece BISHOP = 3;
+const Piece ROOK = 4;
+const Piece QUEEN = 5;
+const Piece KING = 6;
 
 // Colors
-const Color white = 0;
-const Color black = 1;
+const Color WHITE = 0;
+const Color BLACK = 1;
 
 // Mask where every bit is set
-const Bitboard all = -1;
+const Bitboard ALL = -1;
 
 // Score constants
-const Score checkMateScore = 32000;
-const Score foundMate = 28000;
-const Score pieceScore[7] = {0, 99, 334, 346, 544, 1032, 0};
+const Score CHECKMATE_SCORE = 32000;
+const Score FOUND_MATE = 28000;
+const Score PIECE_SCORE[7] = {0, 99, 334, 346, 544, 1032, 0};
 
 // Null constants
-const Score noScore = 32001;
-const Move nullOrNoMove = 0;
-const TTKey noHash = 0;
+const Score NO_SCORE = 32001;
+const Move NULL_OR_NO_MOVE = 0;
+const TTKey NO_HASH = 0;
 
 // Maximum size constants
-const int maxMovesInTurn = 250;
-const Depth maximumPly = 100;
+const int MAX_MOVES_IN_TURN = 250;
+const Depth MAX_PLY = 100;
 
 // No enpassant
-const File noEP = 15;
+const File NO_EP = 15;
 
 // Castling Bits
-const int8 castleWhiteK = (1 << 0);
-const int8 castleWhiteQ = (1 << 1);
-const int8 castleBlackK = (1 << 2);
-const int8 castleBlackQ = (1 << 3);
+const int8 CASTLE_WHITE_K = (1 << 0);
+const int8 CASTLE_WHITE_Q = (1 << 1);
+const int8 CASTLE_BLACK_K = (1 << 2);
+const int8 CASTLE_BLACK_Q = (1 << 3);
 
 // Squares
 enum{
-    a1, b1, c1, d1, e1, f1, g1, h1,
-    a2, b2, c2, d2, e2, f2, g2, h2,
-    a3, b3, c3, d3, e3, f3, g3, h3,
-    a4, b4, c4, d4, e4, f4, g4, h4,
-    a5, b5, c5, d5, e5, f5, g5, h5,
-    a6, b6, c6, d6, e6, f6, g6, h6,
-    a7, b7, c7, d7, e7, f7, g7, h7,
-    a8, b8, c8, d8, e8, f8, g8, h8
+    SQ_A1, SQ_B1, SQ_C1, SQ_D1, SQ_E1, SQ_F1, SQ_G1, SQ_H1,
+    SQ_A2, SQ_B2, SQ_C2, SQ_D2, SQ_E2, SQ_F2, SQ_G2, SQ_H2,
+    SQ_A3, SQ_B3, SQ_C3, SQ_D3, SQ_E3, SQ_F3, SQ_G3, SQ_H3,
+    SQ_A4, SQ_B4, SQ_C4, SQ_D4, SQ_E4, SQ_F4, SQ_G4, SQ_H4,
+    SQ_A5, SQ_B5, SQ_C5, SQ_D5, SQ_E5, SQ_F5, SQ_G5, SQ_H5,
+    SQ_A6, SQ_B6, SQ_C6, SQ_D6, SQ_E6, SQ_F6, SQ_G6, SQ_H6,
+    SQ_A7, SQ_B7, SQ_C7, SQ_D7, SQ_E7, SQ_F7, SQ_G7, SQ_H7,
+    SQ_A8, SQ_B8, SQ_C8, SQ_D8, SQ_E8, SQ_F8, SQ_G8, SQ_H8
 };
 
 // Files
 enum{
-    fileA, fileB, fileC, fileD, fileE, fileF, fileG, fileH
+    FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H
 };
 
 // Ranks
 enum{
-    rank1, rank2, rank3, rank4, rank5, rank6, rank7, rank8
+    RANK_1, RANK2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8
 };

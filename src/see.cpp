@@ -4,7 +4,7 @@
 #include "types.h"
 #include "attacks.h"
 
-bool position::seeGreater(Move move, Score threshold){
+bool Position::seeGreater(Move move, Score threshold){
     // SEE basically calculates the result of a qsearch if we only consider the
     // destination square. We return whether the result is >= capture. We 
     // assume that (initial piece color == colorToMove) and that the move is legal.
@@ -19,20 +19,20 @@ bool position::seeGreater(Move move, Score threshold){
 
     // Deal with special moves:
     // 1) Always return true for promotion
-    // 2) Assume en passant is worth a free pawn (score = pawn)
+    // 2) Assume en passant is worth a free pawn (score = PAWN)
     // 3) Castling has a score of 0
 
-    if (movePromo(move) != noPiece){
+    if (movePromo(move) != NO_PIECE){
         return true;
     }
     if (isEP(move)){
-        return threshold <= pieceScore[pawn];
+        return threshold <= PIECE_SCORE[PAWN];
     }
-    if (pieceTypeMoved == king and abs(getFile(st) - getFile(target)) == 2){
+    if (pieceTypeMoved == KING and abs(getFile(st) - getFile(target)) == 2){
         return threshold <= 0;
     }
-    // Perform the initial capture (note that capt == noPiece may be true)
-    Score score = pieceScore[pieceTypeCaptured];
+    // Perform the initial capture (note that capt == NO_PIECE may be true)
+    Score score = PIECE_SCORE[pieceTypeCaptured];
 
     // Cur player is not above the threshold after initially capturing
     if (score < threshold){
@@ -47,15 +47,15 @@ bool position::seeGreater(Move move, Score threshold){
     Bitboard occupancy = (allBB ^ (1ULL << st)) | (1ULL << target);
 
     // Initialize attackers with non-sliders
-    Bitboard attackers = (pawnAttack(target, black) & pieceBB[pawn][white])
-                         | (pawnAttack(target, white) & pieceBB[pawn][black])
-                         | (knightAttack(target) & allPiece(knight))
-                         | (kingAttack(target) & allPiece(king));
+    Bitboard attackers = (pawnAttack(target, BLACK) & pieceBB[PAWN][WHITE])
+                         | (pawnAttack(target, WHITE) & pieceBB[PAWN][BLACK])
+                         | (knightAttack(target) & allPiece(KNIGHT))
+                         | (kingAttack(target) & allPiece(KING));
                          
     while (true){
         // Find new slider attacks
-        attackers |= (bishopAttack(target, occupancy) & (allPiece(bishop) | allPiece(queen)))
-                   | (rookAttack(target, occupancy) & (allPiece(rook) | allPiece(queen)));
+        attackers |= (bishopAttack(target, occupancy) & (allPiece(BISHOP) | allPiece(QUEEN)))
+                   | (rookAttack(target, occupancy) & (allPiece(ROOK) | allPiece(QUEEN)));
 
         // Remove the used pieces
         attackers &= occupancy;
@@ -63,7 +63,7 @@ bool position::seeGreater(Move move, Score threshold){
         // The least valuable attacker
         Piece lva = 0;
 
-        for (Piece pieceType : {pawn, knight, bishop, rook, queen, king}){
+        for (Piece pieceType : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}){
             if (Bitboard pieceAttacker = (attackers & pieceBB[pieceType][col]); pieceAttacker){
                 lva = pieceType;
                 occupancy ^= (1ULL << lsb(pieceAttacker));
@@ -77,13 +77,13 @@ bool position::seeGreater(Move move, Score threshold){
         }
 
         // We capture pieceTypeToBeCaptured and update score (make everything relative to us)
-        score = -score + pieceScore[pieceTypeToBeCaptured];
+        score = -score + PIECE_SCORE[pieceTypeToBeCaptured];
         threshold = -threshold;
         
         // If the opponent's last capture was with the king and we "captured" it then we win
         // Must put this before next if statement.
         
-        if (pieceTypeToBeCaptured == king){
+        if (pieceTypeToBeCaptured == KING){
             return (col == turn);
         }
         // We fail to be above/at the threshold after capturing so !col wins

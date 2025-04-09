@@ -10,7 +10,7 @@ struct moveInfo{
 
 struct moveList{
     int sz = 0;
-    moveInfo moves[maxMovesInTurn];
+    moveInfo moves[MAX_MOVES_IN_TURN];
 
     inline void addMove(Move move){
         moves[sz++].move = move;

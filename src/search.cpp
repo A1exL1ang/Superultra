@@ -10,14 +10,14 @@
 static timeMan tm;
 static uint64 nodeLim;
 static std::vector<std::thread> threads;
-static std::vector<searchData> threadSD;
-static Depth lmrReduction[maximumPly + 5][maxMovesInTurn];
+static std::vector<SearchData> threadSD;
+static Depth lmrReduction[MAX_PLY + 5][MAX_MOVES_IN_TURN];
 
 bool pondering = false;
 
 void initLMR(){
-    for (Depth depth = 1; depth <= maximumPly; depth++){
-        for (int i = 0; i < maxMovesInTurn; i++){
+    for (Depth depth = 1; depth <= MAX_PLY; depth++){
+        for (int i = 0; i < MAX_MOVES_IN_TURN; i++){
             lmrReduction[depth][i] = 1.5 + log(depth) * log(i + 1) / 2;
         }
     }
@@ -59,7 +59,7 @@ void endSearch(){
     tm.forceStop = true;
 }
 
-static inline void checkEnd(searchData &sd){
+static inline void checkEnd(SearchData &sd){
     sd.stopped = tm.stopDuringSearch();
 
     // If we have a node limit and are at thread 0, check our node count
@@ -78,15 +78,15 @@ static inline void adjustEval(ttEntry &tte, Score &staticEval){
     // Adjust evaluation based on TT by snapping our static evaluation to the
     // TT score based on bound. We assume that tte exists and has a score
     
-    if (decodeBound(tte.ageAndBound) == boundExact
-        or (decodeBound(tte.ageAndBound) == boundLower and staticEval < tte.score)
-        or (decodeBound(tte.ageAndBound) == boundUpper and staticEval > tte.score))
+    if (decodeBound(tte.ageAndBound) == BOUND_EXACT
+        or (decodeBound(tte.ageAndBound) == BOUND_LOWER and staticEval < tte.score)
+        or (decodeBound(tte.ageAndBound) == BOUND_UPPER and staticEval > tte.score))
     {
         staticEval = tte.score;
     }
 }
 
-template<bool pvNode> static Score qsearch(Score alpha, Score beta, Depth ply, position &board, searchData &sd, searchStack *ss){
+template<bool pvNode> static Score qsearch(Score alpha, Score beta, Depth ply, Position &board, SearchData &sd, SearchStack *ss){
     // Step 1) Leaf node and misc stuff
     // Update information and check if we should stop
 
@@ -101,7 +101,7 @@ template<bool pvNode> static Score qsearch(Score alpha, Score beta, Depth ply, p
     if (board.drawByRepetition(ply) or board.drawByInsufficientMaterial() or board.drawByFiftyMoveRule()){
         return 1 - (sd.nodes & 2);
     }
-    if (ply > maximumPly){
+    if (ply > MAX_PLY){
         return board.eval();
     }
 
@@ -114,12 +114,12 @@ template<bool pvNode> static Score qsearch(Score alpha, Score beta, Depth ply, p
     Score originalAlpha = alpha;
     bool inCheck = board.inCheck();
 
-    ss->staticEval = noScore;
+    ss->staticEval = NO_SCORE;
 
     if (foundEntry and !pvNode){
-        if (decodeBound(tte.ageAndBound) == boundExact 
-            or (decodeBound(tte.ageAndBound) == boundLower and tte.score >= beta)
-            or (decodeBound(tte.ageAndBound) == boundUpper and tte.score <= alpha))
+        if (decodeBound(tte.ageAndBound) == BOUND_EXACT 
+            or (decodeBound(tte.ageAndBound) == BOUND_LOWER and tte.score >= beta)
+            or (decodeBound(tte.ageAndBound) == BOUND_UPPER and tte.score <= alpha))
         {
             return tte.score;
         }
@@ -136,7 +136,7 @@ template<bool pvNode> static Score qsearch(Score alpha, Score beta, Depth ply, p
         // Don't do it if we have mate score and are at PV or else we will return improper mating PV list
         // and things get messy since bestScore may not be a mate score
 
-        if (foundEntry and tte.score != noScore and abs(tte.score) < foundMate){
+        if (foundEntry and tte.score != NO_SCORE and abs(tte.score) < FOUND_MATE){
             adjustEval(tte, ss->staticEval);
         }
         
@@ -157,16 +157,16 @@ template<bool pvNode> static Score qsearch(Score alpha, Score beta, Depth ply, p
     board.genAllMoves(!inCheck, moves);
     
     if (moves.sz == 0){
-        return inCheck ? -(checkMateScore - ply) : ss->staticEval;
+        return inCheck ? -(CHECKMATE_SCORE - ply) : ss->staticEval;
     }
     
-    scoreMoves(moves, foundEntry ? tte.bestMove : nullOrNoMove, ply, board, sd, ss);
+    scoreMoves(moves, foundEntry ? tte.bestMove : NULL_OR_NO_MOVE, ply, board, sd, ss);
 
     // Step 5) Iterate over moves
-    // Note that we set bestScore to -checkMateScore but we will max it with standingPat after the loop
+    // Note that we set bestScore to -CHECKMATE_SCORE but we will max it with standingPat after the loop
 
-    Score bestScore = -checkMateScore;
-    Move bestMove = nullOrNoMove;
+    Score bestScore = -CHECKMATE_SCORE;
+    Move bestMove = NULL_OR_NO_MOVE;
 
     for (int i = 0; i < moves.sz; i++){
         // Step 6) Bring best move forwards and initialize
@@ -181,10 +181,10 @@ template<bool pvNode> static Score qsearch(Score alpha, Score beta, Depth ply, p
         // we hit a losing move determined in move ordering. The second statement
         // ignores all moves with a losing SEE including quiet moves 
 
-        if (bestScore > -foundMate and mscore < okayThresholdScore){
+        if (bestScore > -FOUND_MATE and mscore < OKAY_THRESHOLD_SCORE){
             break;
         }
-        if (bestScore > -foundMate and !board.seeGreater(move, -50)){
+        if (bestScore > -FOUND_MATE and !board.seeGreater(move, -50)){
             continue;
         }
 
@@ -193,7 +193,7 @@ template<bool pvNode> static Score qsearch(Score alpha, Score beta, Depth ply, p
 
         ss->move = move;
         ss->counter = &(sd.counter[board.movePieceEnc(move)][moveTo(move)]);
-        ss->contHist = &(sd.contHist[board.moveCaptType(move) != noPiece][board.movePieceEnc(move)][moveTo(move)]);
+        ss->contHist = &(sd.contHist[board.moveCaptType(move) != NO_PIECE][board.movePieceEnc(move)][moveTo(move)]);
         sd.nodes++;
 
         board.makeMove(move);
@@ -235,20 +235,20 @@ template<bool pvNode> static Score qsearch(Score alpha, Score beta, Depth ply, p
 
     // Update TT
     if (!sd.stopped){
-        TTboundAge bound = boundExact;
+        TTboundAge bound = BOUND_EXACT;
 
         if (bestScore <= originalAlpha){
-            bound = boundUpper;
+            bound = BOUND_UPPER;
         }
         else if (bestScore >= beta){
-            bound = boundLower;
+            bound = BOUND_LOWER;
         }
         globalTT.addToTT(board.getHash(), bestScore, ss->staticEval, bestMove, 0, ply,bound, pvNode);
     }
     return bestScore;
 }
 
-template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta, Depth ply, Depth depth, position &board, searchData &sd, searchStack *ss){
+template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta, Depth ply, Depth depth, Position &board, SearchData &sd, SearchStack *ss){
     // 1) Leaf node and misc stuff
     // Update information and check if we should stop
 
@@ -261,7 +261,7 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
     if (sd.stopped){
         return 0;
     }
-    if (ply > maximumPly){
+    if (ply > MAX_PLY){
         return board.eval();
     }
     if (depth <= 0){
@@ -273,12 +273,12 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
     
     // Step 2) Mate distance pruning (~0.5 elo but good for finding mates)
     // We prunes trees that have no hope of improving our mate score (if we have one).
-    // Upperbound of score for our current node: checkMateScore - ply - 1
-    // Lowerbound of score for our current node: -checkMateScore + ply
+    // Upperbound of score for our current node: CHECKMATE_SCORE - ply - 1
+    // Lowerbound of score for our current node: -CHECKMATE_SCORE + ply
 
     if (ply > 0){
-        alpha = std::max(alpha, static_cast<Score>(-checkMateScore + ply));
-        beta = std::min(beta, static_cast<Score>(checkMateScore - ply - 1));
+        alpha = std::max(alpha, static_cast<Score>(-CHECKMATE_SCORE + ply));
+        beta = std::min(beta, static_cast<Score>(CHECKMATE_SCORE - ply - 1));
 
         if (alpha >= beta){
             return alpha;
@@ -289,20 +289,20 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
     // Get TT values and other variables and check if we can end early
 
     ttEntry tte = ttEntry();
-    bool foundEntry = ss->excludedMove == nullOrNoMove ? globalTT.probe(board.getHash(), tte, ply) : false;
+    bool foundEntry = ss->excludedMove == NULL_OR_NO_MOVE ? globalTT.probe(board.getHash(), tte, ply) : false;
 
     Score originalAlpha = alpha;
     bool inCheck = board.inCheck();
 
-    ss->staticEval = noScore;
+    ss->staticEval = NO_SCORE;
 
     if (foundEntry
         and !pvNode
         and tte.depth >= depth)
     {
-        if (decodeBound(tte.ageAndBound) == boundExact 
-            or (decodeBound(tte.ageAndBound) == boundLower and tte.score >= beta)
-            or (decodeBound(tte.ageAndBound) == boundUpper and tte.score <= alpha))
+        if (decodeBound(tte.ageAndBound) == BOUND_EXACT 
+            or (decodeBound(tte.ageAndBound) == BOUND_LOWER and tte.score >= beta)
+            or (decodeBound(tte.ageAndBound) == BOUND_UPPER and tte.score <= alpha))
         {
             return tte.score;
         }
@@ -314,7 +314,7 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
     if ((pvNode or cutNode)
         and depth >= 4 
         and !foundEntry 
-        and ss->excludedMove == nullOrNoMove)
+        and ss->excludedMove == NULL_OR_NO_MOVE)
     {
         depth--;
     }
@@ -327,14 +327,14 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
     if (!inCheck){
         ss->staticEval = foundEntry ? tte.staticEval : board.eval();
     }
-    bool improving = (!inCheck and (ply >= 2 and ((ss - 2)->staticEval == noScore or ss->staticEval > (ss - 2)->staticEval)));
+    bool improving = (!inCheck and (ply >= 2 and ((ss - 2)->staticEval == NO_SCORE or ss->staticEval > (ss - 2)->staticEval)));
 
     // Step 6) Reverse Futility Pruning (~75 elo)
     // If the static evaluation is far above beta, we can assume that it will fail high
 
     if (!pvNode 
         and !inCheck
-        and ss->excludedMove == nullOrNoMove
+        and ss->excludedMove == NULL_OR_NO_MOVE
         and depth <= 8
         and ss->staticEval - 77 * std::max(depth - improving, 0) >= beta)
     {
@@ -347,10 +347,10 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
     
     if (!pvNode 
         and !inCheck 
-        and ss->excludedMove == nullOrNoMove
+        and ss->excludedMove == NULL_OR_NO_MOVE
         and depth <= 2
         and foundEntry 
-        and (decodeBound(tte.ageAndBound) == boundUpper or decodeBound(tte.ageAndBound) == boundExact) 
+        and (decodeBound(tte.ageAndBound) == BOUND_UPPER or decodeBound(tte.ageAndBound) == BOUND_EXACT) 
         and tte.score + 180 * depth * depth <= alpha)
     {
         return tte.score;
@@ -362,14 +362,14 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
 
     if (!pvNode 
         and !inCheck
-        and ss->excludedMove == nullOrNoMove
+        and ss->excludedMove == NULL_OR_NO_MOVE
         and depth >= 3 
         and ss->staticEval >= beta
-        and (ply >= 1 and (ss - 1)->move != nullOrNoMove)
+        and (ply >= 1 and (ss - 1)->move != NULL_OR_NO_MOVE)
         and board.hasMajorPieceLeft(board.getTurn()))
     {
         // Make move and update variables
-        ss->move = nullOrNoMove;
+        ss->move = NULL_OR_NO_MOVE;
         sd.nodes++;
 
         board.makeNullMove();
@@ -386,7 +386,7 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
         // See if score is above beta
         if (score >= beta){
             // Don't use mate score
-            if (score >= foundMate){
+            if (score >= FOUND_MATE){
                 score = beta;
             }
             return score;
@@ -398,20 +398,20 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
     // of them have a score higher than probCutBeta at a reduced depth then we can assume that move will 
     // will have a score higher than beta at a normal depth
     
-    Score probCutBeta = std::min(beta + 200 - 40 * improving, static_cast<int>(checkMateScore));
+    Score probCutBeta = std::min(beta + 200 - 40 * improving, static_cast<int>(CHECKMATE_SCORE));
     
     if (!pvNode 
         and !inCheck
-        and ss->excludedMove == nullOrNoMove
+        and ss->excludedMove == NULL_OR_NO_MOVE
         and depth >= 5
-        and abs(beta) < foundMate 
+        and abs(beta) < FOUND_MATE 
         and !(foundEntry and tte.score < probCutBeta and tte.depth + 3 >= depth))
     {
         // We only try noisy moves
         moveList probCutMoves;
         board.genAllMoves(true, probCutMoves);
         
-        scoreMoves(probCutMoves, foundEntry ? tte.bestMove : nullOrNoMove, ply, board, sd, ss);
+        scoreMoves(probCutMoves, foundEntry ? tte.bestMove : NULL_OR_NO_MOVE, ply, board, sd, ss);
 
         for (int i = 0; i < probCutMoves.sz; i++){
             probCutMoves.bringBest(i);
@@ -425,7 +425,7 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
             // Perform the move and make relevant updates
             ss->move = move;
             ss->counter = &(sd.counter[board.movePieceEnc(move)][moveTo(move)]);
-            ss->contHist = &(sd.contHist[board.moveCaptType(move) != noPiece][board.movePieceEnc(move)][moveTo(move)]);
+            ss->contHist = &(sd.contHist[board.moveCaptType(move) != NO_PIECE][board.movePieceEnc(move)][moveTo(move)]);
             sd.nodes++;
 
             board.makeMove(move);
@@ -445,7 +445,7 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
             // Prune as this move will likely fail high when searched with a normal depth
             if (score >= probCutBeta){
                 // Store entry in TT
-                globalTT.addToTT(board.getHash(), score, ss->staticEval, move, depth - 3, ply, boundLower, pvNode);
+                globalTT.addToTT(board.getHash(), score, ss->staticEval, move, depth - 3, ply, BOUND_LOWER, pvNode);
                 return score;
             }
         }
@@ -458,15 +458,15 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
     board.genAllMoves(false, moves);
      
     if (moves.sz == 0){
-        return inCheck ? -(checkMateScore - ply) : 0;
+        return inCheck ? -(CHECKMATE_SCORE - ply) : 0;
     }
-    scoreMoves(moves, foundEntry ? tte.bestMove : nullOrNoMove, ply, board, sd, ss);
+    scoreMoves(moves, foundEntry ? tte.bestMove : NULL_OR_NO_MOVE, ply, board, sd, ss);
 
     // Step 11) Iterate over the moves
     // Pretty self explanatory...
 
-    Score bestScore = -checkMateScore;
-    Move bestMove = nullOrNoMove;
+    Score bestScore = -CHECKMATE_SCORE;
+    Move bestMove = NULL_OR_NO_MOVE;
     int movesSeen = 0;
 
     for (int i = 0; i < moves.sz; i++){
@@ -476,18 +476,18 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
         moves.bringBest(i);
         Move move = moves.moves[i].move;
 
-        if (ss->excludedMove != nullOrNoMove and move == ss->excludedMove){
+        if (ss->excludedMove != NULL_OR_NO_MOVE and move == ss->excludedMove){
             continue;
         }
 
-        Score score = checkMateScore;
+        Score score = CHECKMATE_SCORE;
         Movescore history = 0;
         Depth extension = 0;
         uint64 nodesBefore = sd.nodes;
 
-        bool ttSoundCapt = (foundEntry and tte.depth > 0 and board.moveCaptType(tte.bestMove) != noPiece);
-        bool isQuiet = movePromo(move) == noPiece and board.moveCaptType(move) == noPiece;
-        bool killerOrCounter = (move == sd.killers[ply][0] or move == sd.killers[ply][1] or (ply >= 1 and (ss - 1)->move != nullOrNoMove and move == *((ss - 1)->counter)));
+        bool ttSoundCapt = (foundEntry and tte.depth > 0 and board.moveCaptType(tte.bestMove) != NO_PIECE);
+        bool isQuiet = movePromo(move) == NO_PIECE and board.moveCaptType(move) == NO_PIECE;
+        bool killerOrCounter = (move == sd.killers[ply][0] or move == sd.killers[ply][1] or (ply >= 1 and (ss - 1)->move != NULL_OR_NO_MOVE and move == *((ss - 1)->counter)));
 
         movesSeen++;
 
@@ -501,7 +501,7 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
         // pruning because we want the lateness in move ordering to affect pruning. However, there is no need to use
         // lmrDepth in move count pruning since we are literally pruning nodes if they are late...
 
-        if (isQuiet and bestScore > -foundMate and !inCheck){
+        if (isQuiet and bestScore > -FOUND_MATE and !inCheck){
             Depth lmrDepth = std::max(1, depth - lmrReduction[depth][i]);
 
             // A) Quiet Move Count Pruning (~14 elo)
@@ -537,7 +537,7 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
         // We skip moves with a bad SEE. More elo can be gained by treating quiet and noisy
         // moves differently
 
-        if (bestScore > -foundMate 
+        if (bestScore > -FOUND_MATE 
             and depth <= 5
             and movesSeen >= 3)
         {
@@ -558,8 +558,8 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
             and foundEntry 
             and move == tte.bestMove
             and tte.depth >= depth - 3 
-            and (decodeBound(tte.ageAndBound) == boundLower or decodeBound(tte.ageAndBound) == boundExact)
-            and abs(tte.score) < foundMate)
+            and (decodeBound(tte.ageAndBound) == BOUND_LOWER or decodeBound(tte.ageAndBound) == BOUND_EXACT)
+            and abs(tte.score) < FOUND_MATE)
         {
             // Check if any other moves at a depth of singularDepth is kinda as good as our tt move's score
             Score singularBeta = tte.score - 3 * depth;
@@ -568,7 +568,7 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
             // Search all other moves -- call search on the same position but exclude the TT move
             ss->excludedMove = move;
             Score singularScore = negamax<false, cutNode>(singularBeta - 1, singularBeta, ply, singularDepth, board, sd, ss);
-            ss->excludedMove = nullOrNoMove;
+            ss->excludedMove = NULL_OR_NO_MOVE;
 
             // Our TT move is singular meaning it's better than all other moves by some margin
             if (singularScore < singularBeta){
@@ -611,7 +611,7 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
         
         ss->move = move;
         ss->counter = &(sd.counter[board.movePieceEnc(move)][moveTo(move)]);
-        ss->contHist = &(sd.contHist[board.moveCaptType(move) != noPiece][board.movePieceEnc(move)][moveTo(move)]);
+        ss->contHist = &(sd.contHist[board.moveCaptType(move) != NO_PIECE][board.movePieceEnc(move)][moveTo(move)]);
         ss->dextension = (ss - 1)->dextension + (extension > 1);
         sd.nodes++;
 
@@ -721,21 +721,21 @@ template<bool pvNode, bool cutNode> static Score negamax(Score alpha, Score beta
     // Step 20) Update TT
     // Put search results into TT 
 
-    if (!sd.stopped and ss->excludedMove == nullOrNoMove){
-        TTboundAge bound = boundExact;
+    if (!sd.stopped and ss->excludedMove == NULL_OR_NO_MOVE){
+        TTboundAge bound = BOUND_EXACT;
 
         if (bestScore <= originalAlpha){
-            bound = boundUpper;
+            bound = BOUND_UPPER;
         }
         else if (bestScore >= beta){
-            bound = boundLower;
+            bound = BOUND_LOWER;
         }
         globalTT.addToTT(board.getHash(), bestScore, ss->staticEval, bestMove, depth, ply, bound, pvNode);
     }
     return bestScore;
 }
 
-Score aspirationWindowSearch(Score prevEval, Depth depth, position &board, searchData &sd){
+Score aspirationWindowSearch(Score prevEval, Depth depth, Position &board, SearchData &sd){
     // Aspiration Window (~35 elo)
     // We assume our current evaluation will be very close
     // to our previous evaluation so we search with a small window around
@@ -743,22 +743,22 @@ Score aspirationWindowSearch(Score prevEval, Depth depth, position &board, searc
 
     // Init window and stack
     int delta = 14;
-    searchStack searchArr[maximumPly + 5];
-    searchStack *ss = searchArr + 2;
+    SearchStack searchArr[MAX_PLY + 5];
+    SearchStack *ss = searchArr + 2;
     
-    for (int i = 0; i < maximumPly + 5; i++){
-        searchArr[i].excludedMove = nullOrNoMove;
+    for (int i = 0; i < MAX_PLY + 5; i++){
+        searchArr[i].excludedMove = NULL_OR_NO_MOVE;
         searchArr[i].dextension = 0;
     }
 
     // Now we init alpha and beta with our window
-    Score alpha = std::max(prevEval - delta, static_cast<int>(-checkMateScore));
-    Score beta = std::min(prevEval + delta, static_cast<int>(checkMateScore));
+    Score alpha = std::max(prevEval - delta, static_cast<int>(-CHECKMATE_SCORE));
+    Score beta = std::min(prevEval + delta, static_cast<int>(CHECKMATE_SCORE));
 
     // If we are at low depth, we just do a single search since low depths are unstable
     if (depth <= 7){
-        alpha = -checkMateScore;
-        beta = checkMateScore;
+        alpha = -CHECKMATE_SCORE;
+        beta = CHECKMATE_SCORE;
     }    
 
     while (true){
@@ -773,16 +773,16 @@ Score aspirationWindowSearch(Score prevEval, Depth depth, position &board, searc
         // Score is an upperbound
         if (score <= alpha){
             beta = (static_cast<int>(alpha) + static_cast<int>(beta)) / 2;
-            alpha = std::max(score - delta, static_cast<int>(-checkMateScore));
+            alpha = std::max(score - delta, static_cast<int>(-CHECKMATE_SCORE));
         }
 
         // Score is a lowerbound
         else if (score >= beta){
             // No alpha = (alpha + beta) / 2 because "it doesn't work" according to discord person (they were correct)
-            beta = std::min(score + delta, static_cast<int>(checkMateScore));
+            beta = std::min(score + delta, static_cast<int>(CHECKMATE_SCORE));
 
             // Reduction
-            if (abs(score) < foundMate and depth >= 8){
+            if (abs(score) < FOUND_MATE and depth >= 8){
                 depth--;
             }
         }
@@ -794,10 +794,10 @@ Score aspirationWindowSearch(Score prevEval, Depth depth, position &board, searc
         
         // Snap to mate score
         if (alpha <= 2750){
-            alpha = -checkMateScore;
+            alpha = -CHECKMATE_SCORE;
         }
         if (beta >= 2750){
-            beta = checkMateScore;
+            beta = CHECKMATE_SCORE;
         }
 
         // Increase delta exponentially
@@ -807,7 +807,7 @@ Score aspirationWindowSearch(Score prevEval, Depth depth, position &board, searc
     return 0;
 }
 
-void printSearchResults(searchResultData result){
+void printSearchResults(SearchResultData result){
     // First get "background info"
     uint64 totalNodes = 0;
     TimePoint timeSpent = tm.timeSpent();
@@ -821,8 +821,8 @@ void printSearchResults(searchResultData result){
     std::cout << "info depth " << int(result.depthSearched);
     std::cout << " seldepth " << int(result.selDepth);
     
-    if (abs(result.score) >= foundMate){
-        std::cout << " score mate " << (checkMateScore - abs(result.score) + 1) * (result.score > 0 ? 1 : -1) / 2;
+    if (abs(result.score) >= FOUND_MATE){
+        std::cout << " score mate " << (CHECKMATE_SCORE - abs(result.score) + 1) * (result.score > 0 ? 1 : -1) / 2;
     }
     else{
         std::cout << " score cp " << result.score;
@@ -844,13 +844,13 @@ void selectBestThread(){
     // We use thread 0 to report info and keep track of time. However, it may not be the best
     // thread so we should select the best thread, report its info, and report its best move
 
-    searchResultData bestResult = threadSD[0].result;
+    SearchResultData bestResult = threadSD[0].result;
 
     for (int i = 1; i < threadCount; i++){
-        searchResultData otherResult = threadSD[i].result;
+        SearchResultData otherResult = threadSD[i].result;
 
         // If both are mating scores, use which one is closer
-        if (abs(bestResult.score) >= foundMate and abs(otherResult.score) >= foundMate){
+        if (abs(bestResult.score) >= FOUND_MATE and abs(otherResult.score) >= FOUND_MATE){
             if (abs(otherResult.score) > abs(bestResult.score)){
                 bestResult = otherResult;
             }
@@ -880,8 +880,8 @@ void selectBestThread(){
     std::cout << std::endl;
 }
 
-void iterativeDeepening(position board, searchData &sd, Depth depthLim){
-    Score score = noScore;
+void iterativeDeepening(Position board, SearchData &sd, Depth depthLim){
+    Score score = NO_SCORE;
 
     for (Depth startingDepth = 1; startingDepth <= depthLim; startingDepth++){
         // Search
@@ -918,14 +918,14 @@ void iterativeDeepening(position board, searchData &sd, Depth depthLim){
     }
 }
 
-void beginSearch(position board, uciSearchLims lims){
-    // Deal with node and depth limits (if no depth limit, force it to be maximumPly)
+void beginSearch(Position board, uciSearchLims lims){
+    // Deal with node and depth limits (if no depth limit, force it to be MAX_PLY)
     // Remember that 0 means the limit has not been set
 
     nodeLim = lims.nodeLim;
 
     if (!lims.depthLim)
-        lims.depthLim = maximumPly;
+        lims.depthLim = MAX_PLY;
 
     // Init
     tm.init(board.getTurn(), lims);

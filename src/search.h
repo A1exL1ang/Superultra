@@ -12,7 +12,7 @@
 
 extern bool pondering;
 
-struct searchStack{
+struct SearchStack{
     Score staticEval;
     Move excludedMove;
     Move move;
@@ -22,24 +22,24 @@ struct searchStack{
     Movescore (*contHist)[14][64];
 };
 
-struct searchResultData{
+struct SearchResultData{
     Depth depthSearched;
     Depth selDepth;
     Score score;
     std::vector<std::string> pvMoves; 
 };
 
-struct searchData{
+struct SearchData{
     int threadId;
     bool stopped;
 
     Depth selDepth;
-    searchResultData result;
+    SearchResultData result;
     
-    Move pvTable[maximumPly + 5][maximumPly + 5];
-    Depth pvLength[maximumPly + 5];
+    Move pvTable[MAX_PLY + 5][MAX_PLY + 5];
+    Depth pvLength[MAX_PLY + 5];
     
-    Move killers[maximumPly + 5][2];
+    Move killers[MAX_PLY + 5][2];
     Move counter[14][64];
 
     Movescore history[2][64][64];
@@ -104,4 +104,4 @@ void clearAllSearchDataHistory();
 
 // Search related
 void endSearch();
-void beginSearch(position board, uciSearchLims lims);
+void beginSearch(Position board, uciSearchLims lims);

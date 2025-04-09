@@ -6,12 +6,12 @@
 #include "timecontrol.h"
 #include "uci.h"
 
-const static TimePoint moveLag = 30;
+const static TimePoint MOVE_LAG = 30;
 
 void timeMan::init(Color col, uciSearchLims uci){
     forceStop = false;
-    lastBestMove = nullOrNoMove;
-    lastScore = noScore;
+    lastBestMove = NULL_OR_NO_MOVE;
+    lastScore = NO_SCORE;
     stability = 0;
     startTime = getTime();
 
@@ -26,7 +26,7 @@ void timeMan::init(Color col, uciSearchLims uci){
 
     int mtg = (uci.movesToGo == 0) ? 50 : uci.movesToGo;
 
-    TimePoint totalTime = uci.timeLeft[col] + (uci.timeIncr[col] * mtg) - moveLag * mtg;
+    TimePoint totalTime = uci.timeLeft[col] + (uci.timeIncr[col] * mtg) - MOVE_LAG * mtg;
     
     optimalTime = averageTime = std::clamp(static_cast<double>(totalTime) / mtg, (0.95 * uci.timeLeft[col]) / mtg, 0.8 * uci.timeLeft[col]);
     

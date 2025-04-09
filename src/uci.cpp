@@ -9,26 +9,26 @@
 #include "search.h"
 
 int threadCount;
-static position board;
+static Position board;
 
 char pieceToChar(Piece p){
-    if (p >> 1 == pawn){
-        return ((p & 1) == white ? 'P' : 'p');
+    if (p >> 1 == PAWN){
+        return ((p & 1) == WHITE ? 'P' : 'p');
     }
-    if (p >> 1 == knight){
-        return ((p & 1) == white ? 'N' : 'n');
+    if (p >> 1 == KNIGHT){
+        return ((p & 1) == WHITE ? 'N' : 'n');
     }
-    if (p >> 1 == bishop){
-        return ((p & 1) == white ? 'B' : 'b');
+    if (p >> 1 == BISHOP){
+        return ((p & 1) == WHITE ? 'B' : 'b');
     }
-    if (p >> 1 == rook){
-        return ((p & 1) == white ? 'R' : 'r');
+    if (p >> 1 == ROOK){
+        return ((p & 1) == WHITE ? 'R' : 'r');
     }
-    if (p >> 1 == queen){
-        return ((p & 1) == white ? 'Q' : 'q');
+    if (p >> 1 == QUEEN){
+        return ((p & 1) == WHITE ? 'Q' : 'q');
     }
-    if (p >> 1 == king){
-        return ((p & 1) == white ? 'K' : 'k');
+    if (p >> 1 == KING){
+        return ((p & 1) == WHITE ? 'K' : 'k');
     }
     return ' ';
 }
@@ -38,24 +38,24 @@ Piece charToPiece(char c){
     c = tolower(c);
 
     if (c == 'p'){
-        return (pawn << 1) + col;
+        return (PAWN << 1) + col;
     }
     if (c == 'n'){
-        return (knight << 1) + col;
+        return (KNIGHT << 1) + col;
     }
     if (c == 'b'){
-        return (bishop << 1) + col;
+        return (BISHOP << 1) + col;
     }
     if (c == 'r'){
-        return (rook << 1) + col;
+        return (ROOK << 1) + col;
     }
     if (c == 'q'){
-        return (queen << 1) + col;
+        return (QUEEN << 1) + col;
     }
     if (c == 'k'){
-        return (king << 1) + col;
+        return (KING << 1) + col;
     }
-    return noPiece;
+    return NO_PIECE;
 }
 
 std::string squareToString(Square sq){
@@ -85,30 +85,30 @@ Move stringToMove(std::string move){
     return encodeMove(st, en, promo);
 }
 
-void position::resetStack(){
+void Position::resetStack(){
     pos[0] = pos[stk];
     stk = 0;
 }
 
-void position::readFen(std::string fen){
+void Position::readFen(std::string fen){
     // Step 1) We break apart the fen by seperating into multiple strings.
     std::istringstream iss(fen);
     std::string piecePosStr, playerTurnStr, castleStr, enpassTargetStr, halfMoveClockStr, currentFullMoveStr;
     iss >> piecePosStr >> playerTurnStr >> castleStr >> enpassTargetStr >> halfMoveClockStr >> currentFullMoveStr;
 
     // Step 2) Reset everything that must be reset
-    std::fill(board, board + 64, noPiece);
+    std::fill(board, board + 64, NO_PIECE);
     memset(pieceBB, 0, sizeof(pieceBB));
     memset(colorBB, 0, sizeof(colorBB));
     allBB = 0;
 
-    pos.resize(maximumPly + 105);
+    pos.resize(MAX_PLY + 105);
     stk = 0;
     
-    pos[stk].move = nullOrNoMove;
-    pos[stk].moveCaptType = noPiece;
+    pos[stk].move = NULL_OR_NO_MOVE;
+    pos[stk].moveCaptType = NO_PIECE;
     pos[stk].castleRights = 0;
-    pos[stk].epFile = noEP;
+    pos[stk].epFile = NO_EP;
     pos[stk].halfMoveClock = 0;
     pos[stk].moveCount = 0;
     pos[stk].zhash = 0;
@@ -135,16 +135,16 @@ void position::readFen(std::string fen){
     // Step 5) Castling rights
     for (char c : castleStr){
         if (c == 'K'){
-            pos[stk].castleRights |= castleWhiteK;
+            pos[stk].castleRights |= CASTLE_WHITE_K;
         }
         if (c == 'Q'){
-            pos[stk].castleRights |= castleWhiteQ;
+            pos[stk].castleRights |= CASTLE_WHITE_Q;
         }
         if (c == 'k'){
-            pos[stk].castleRights |= castleBlackK;
+            pos[stk].castleRights |= CASTLE_BLACK_K;
         }
         if (c == 'q'){
-            pos[stk].castleRights |= castleBlackQ;
+            pos[stk].castleRights |= CASTLE_BLACK_Q;
         }
     }
 
@@ -161,10 +161,10 @@ void position::readFen(std::string fen){
     pos[stk].zhash ^= ttRngCastle[pos[stk].castleRights] ^ ttRngEnpass[pos[stk].epFile] ^ (ttRngTurn * turn);
     
     // Step 8) Refresh NNUE
-    pos[stk].nnue.refresh(board, kingSq(white), kingSq(black));
+    pos[stk].nnue.refresh(board, kingSq(WHITE), kingSq(BLACK));
 }
 
-std::string position::getFen(){
+std::string Position::getFen(){
     std::string fen = "";
 
     // Step 1) Piece positions
@@ -186,21 +186,21 @@ std::string position::getFen(){
     
     // Step 2) Turn
     fen += " ";
-    fen += (turn == white ? "w" : "b");
+    fen += (turn == WHITE ? "w" : "b");
 
     // Step 3) Castling rights
     fen += " ";
 
-    if (pos[stk].castleRights & castleWhiteK){
+    if (pos[stk].castleRights & CASTLE_WHITE_K){
         fen += "K";
     }
-    if (pos[stk].castleRights & castleWhiteQ){
+    if (pos[stk].castleRights & CASTLE_WHITE_Q){
         fen += "Q";
     }
-    if (pos[stk].castleRights & castleBlackK){
+    if (pos[stk].castleRights & CASTLE_BLACK_K){
         fen += "k";
     }
-    if (pos[stk].castleRights & castleBlackQ){
+    if (pos[stk].castleRights & CASTLE_BLACK_Q){
         fen += 'q';
     }
     if (!pos[stk].castleRights){
@@ -209,9 +209,9 @@ std::string position::getFen(){
 
     // Step 4: En passant
     fen += " ";
-    if (pos[stk].epFile != noEP){
+    if (pos[stk].epFile != NO_EP){
         fen += (pos[stk].epFile + 'a');
-        fen += std::to_string(turn == white ? 6 : 3);
+        fen += std::to_string(turn == WHITE ? 6 : 3);
     }
     else{
         fen += "-";
@@ -248,19 +248,19 @@ static uciSearchLims proccessGo(std::istringstream &iss){
         }
         // Time left for white
         else if (token == "wtime"){
-            iss >> lims.timeLeft[white];
+            iss >> lims.timeLeft[WHITE];
         }
         // Time left for black
         else if (token == "btime"){
-            iss >> lims.timeLeft[black];
+            iss >> lims.timeLeft[BLACK];
         }
         // Increment per move for white
         else if (token == "winc"){
-            iss >> lims.timeIncr[white];
+            iss >> lims.timeIncr[WHITE];
         }
         // Increment per move for black
         else if (token == "binc"){
-            iss >> lims.timeIncr[black];
+            iss >> lims.timeIncr[BLACK];
         }
         // Moves till next time control
         else if (token == "movestogo"){
@@ -334,7 +334,7 @@ static void setPos(std::istringstream &iss){
     // Now play the remaining moves
     while (iss >> token){
         Move move = stringToMove(token);
-        bool fmr = board.moveCaptType(move) != noPiece or board.movePieceType(move) == pawn;
+        bool fmr = board.moveCaptType(move) != NO_PIECE or board.movePieceType(move) == PAWN;
 
         board.makeMove(move);
 

@@ -15,15 +15,15 @@
 //     depth: 1
 //     age and bound: 1 (bits [0...5] are age and [6...7] is bound)
 
-const int clusterSize = 4;
+const int CLUSTER_SIZE = 4;
 
 // Values for age and bound encoding
-const TTboundAge boundLower = 64;
-const TTboundAge boundUpper = 128;
-const TTboundAge boundExact = boundLower | boundUpper; 
-const TTboundAge ageCycle = 63;
-const TTboundAge ageBits = 63;
-const TTboundAge boundBits = 192;
+const TTboundAge BOUND_LOWER = 64;
+const TTboundAge BOUND_UPPER = 128;
+const TTboundAge BOUND_EXACT = BOUND_LOWER | BOUND_UPPER; 
+const TTboundAge AGE_CYCLE = 63;
+const TTboundAge AGE_BITS = 63;
+const TTboundAge BOUND_BITS = 192;
 
 // Hash values
 extern TTKey ttRngPiece[7][2][64]; 
@@ -41,9 +41,9 @@ struct ttEntry{
 
     // Empty slot constructor
     ttEntry(){
-        zhash = noHash;
-        score = staticEval = noScore;
-        bestMove = nullOrNoMove;
+        zhash = NO_HASH;
+        score = staticEval = NO_SCORE;
+        bestMove = NULL_OR_NO_MOVE;
         depth = ageAndBound = 0;
     }
 
@@ -59,7 +59,7 @@ struct ttEntry{
 };
 
 struct ttCluster{
-    ttEntry dat[clusterSize];
+    ttEntry dat[CLUSTER_SIZE];
 };
 
 struct ttStruct{
@@ -77,7 +77,7 @@ struct ttStruct{
     int hashFullness();
 
     inline void incrementAge(){
-        currentAge = ((currentAge + 1) & ageCycle);
+        currentAge = ((currentAge + 1) & AGE_CYCLE);
     }
     inline void prefetch(TTKey zhash){
         __builtin_prefetch(&table[zhash & maskMod]);
@@ -94,12 +94,12 @@ inline TTboundAge encodeAgeAndBound(TTboundAge age, TTboundAge bound){
 
 // Bits [6...7] is bound
 inline TTboundAge decodeBound(TTboundAge val){
-    return (val & boundBits);
+    return (val & BOUND_BITS);
 }
 
 // Bits [0...5] is age
 inline TTboundAge decodeAge(TTboundAge val){
-    return (val & ageBits);
+    return (val & AGE_BITS);
 }
 
 // We want mate scores to be relative to the subtree searched.
@@ -107,14 +107,14 @@ inline TTboundAge decodeAge(TTboundAge val){
 // to the entire search tree, then our score is (mateScore - 5) relative to the ply 5 node.
 
 inline Score scoreToTT(Score score, Depth rootPly){
-    if (abs(score) >= foundMate){
+    if (abs(score) >= FOUND_MATE){
         return score > 0 ? score + rootPly : score - rootPly;
     }
     return score;
 }
 
 inline Score scoreFromTT(Score score, Depth rootPly){
-    if (abs(score) >= foundMate){
+    if (abs(score) >= FOUND_MATE){
         return score > 0 ? score - rootPly : score + rootPly;
     }
     return score;
@@ -122,14 +122,14 @@ inline Score scoreFromTT(Score score, Depth rootPly){
 
 inline int quality(ttEntry entry, TTboundAge ttCurrentAge){
     // If nothing is there then set quality to 0 (which is lowest)
-    if (entry.zhash == noHash){
+    if (entry.zhash == NO_HASH){
         return 0;
     }
-    // Be careful about age "wrapping around" and add ageCycle+1 to make age positive
-    int age = static_cast<int>(decodeAge(entry.ageAndBound)) + static_cast<int>(ageCycle) + 1;
+    // Be careful about age "wrapping around" and add AGE_CYCLE+1 to make age positive
+    int age = static_cast<int>(decodeAge(entry.ageAndBound)) + static_cast<int>(AGE_CYCLE) + 1;
 
     if (age > ttCurrentAge){
-        age -= ageCycle;
+        age -= AGE_CYCLE;
     }
     // Quality is age * 4 + depth
     return age * 4 + entry.depth;

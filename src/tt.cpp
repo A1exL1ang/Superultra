@@ -18,8 +18,8 @@ static inline uint64 genRand(){
 }
 
 void initTT(){
-    for (Piece pieceType : {pawn, knight, bishop, rook, queen, king}){
-        for (Color col : {white, black}){
+    for (Piece pieceType : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}){
+        for (Color col : {WHITE, BLACK}){
             for (Square sq = 0; sq < 64; sq++){
                 ttRngPiece[pieceType][col][sq] = genRand();
             }
@@ -38,7 +38,7 @@ void initTT(){
 
 void ttStruct::clearTT(){
     for (int i = 0; i < sz; i++){
-        for (int j = 0; j < clusterSize; j++){
+        for (int j = 0; j < CLUSTER_SIZE; j++){
             table[i].dat[j] = ttEntry();
         }
     }
@@ -61,7 +61,7 @@ void ttStruct::setSize(uint64 megabytes){
 bool ttStruct::probe(TTKey probehash, ttEntry &tte, Depth ply){
     ttEntry *bucket = &table[(probehash & maskMod)].dat[0];
 
-    for (int i = 0; i < clusterSize; i++){
+    for (int i = 0; i < CLUSTER_SIZE; i++){
         if (bucket[i].zhash == probehash){
             // Update age of entry to be most recent
             bucket[i].ageAndBound = encodeAgeAndBound(currentAge, decodeBound(bucket[i].ageAndBound));
@@ -85,7 +85,7 @@ void ttStruct::addToTT(TTKey zhash, Score score, Score staticEval, Move bestMove
     // Find replacement entry by finding entry with same hash or the entry
     // of the worst quality if the entry of the same hash doesn't exist
 
-    for (int i = 0; i < clusterSize; i++){
+    for (int i = 0; i < CLUSTER_SIZE; i++){
         // An entry with this hash already exists
         if (bucket[i].zhash == zhash){
             replace = i;
@@ -103,7 +103,7 @@ void ttStruct::addToTT(TTKey zhash, Score score, Score staticEval, Move bestMove
     
     ttEntry newEntry = ttEntry(zhash, scoreToTT(score, ply), staticEval, bestMove, depth, encodeAgeAndBound(currentAge, bound));
 
-    if (bound == boundExact
+    if (bound == BOUND_EXACT
         or (bucket[replace].zhash != zhash and quality(newEntry, currentAge) + 1 + 2 * pvNode >= quality(bucket[replace], currentAge))
         or (bucket[replace].zhash == zhash and depth + pvNode >= bucket[replace].depth))
     {
@@ -113,10 +113,10 @@ void ttStruct::addToTT(TTKey zhash, Score score, Score staticEval, Move bestMove
 
 int ttStruct::hashFullness(){
     int counter = 0;
-    for (int i = 0; i < 1000 / clusterSize; i++){
-        for (int j = 0; j < clusterSize; j++){
+    for (int i = 0; i < 1000 / CLUSTER_SIZE; i++){
+        for (int j = 0; j < CLUSTER_SIZE; j++){
             if (decodeAge(table[i].dat[j].ageAndBound) == currentAge){
-                counter += (table[i].dat[j].zhash != noHash);
+                counter += (table[i].dat[j].zhash != NO_HASH);
             }
         }
     }

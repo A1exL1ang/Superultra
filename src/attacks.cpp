@@ -30,7 +30,7 @@ void initLineBB(){
 
 static void initSingleMagic(Square sq, bool isBishop){
     // Generate all non-end-of-path positions for blockers
-    uint64 maskAllPos = isBishop ? bishopMagicMask[sq] : rookMagicMask[sq]; 
+    uint64 maskAllPos = isBishop ? BISHOP_MAGIC_MASK[sq] : ROOK_MAGIC_MASK[sq]; 
     std::vector<Square> pos; 
 
     for (Bitboard m = maskAllPos; m;){
@@ -69,7 +69,7 @@ static void initSingleMagic(Square sq, bool isBishop){
             }
         }
     }
-    uint64 magic = isBishop ? bishopMagic[sq] : rookMagic[sq];
+    uint64 magic = isBishop ? BISHOP_MAGIC[sq] : ROOK_MAGIC[sq];
     Bitboard *cache = isBishop ? bishopMagicCache[sq] : rookMagicCache[sq];
 
     for (uint64 blkMask = 0; blkMask < static_cast<uint64>(1 << pos.size()); blkMask++){

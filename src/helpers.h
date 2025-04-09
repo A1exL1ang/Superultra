@@ -47,7 +47,7 @@ inline Square flip(Square sq){
 
 // Flip square if black
 inline Square flipIfBlack(Square sq, Color col){
-    return col == white ? sq : flip(sq);
+    return col == WHITE ? sq : flip(sq);
 }
 
 // Gets the file of a square
