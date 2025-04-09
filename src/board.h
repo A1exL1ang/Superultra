@@ -109,7 +109,7 @@ public:
 
 private:
     // Position stack (UCI doesnt support undo so we store the minimum (up to 50mr) and reset the stack when necessary)
-    boardState pos[maximumPly + 105];
+    std::vector<boardState> pos;
     int stk;
 
     // Board variables

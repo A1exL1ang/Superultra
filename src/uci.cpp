@@ -102,7 +102,9 @@ void position::readFen(std::string fen){
     memset(colorBB, 0, sizeof(colorBB));
     allBB = 0;
 
+    pos.resize(maximumPly + 105);
     stk = 0;
+    
     pos[stk].move = nullOrNoMove;
     pos[stk].moveCaptType = noPiece;
     pos[stk].castleRights = 0;
@@ -223,12 +225,12 @@ std::string position::getFen(){
 }
 
 static void printInfo(){
-    std::cout<<"id name Superultra 2.0"<<std::endl;
-    std::cout<<"id author Alexander Liang"<<std::endl;
-    std::cout<<"option name Hash type spin default 16 min 1 max 2048"<<std::endl;
-    std::cout<<"option name Threads type spin default 1 min 1 max 256"<<std::endl;
-    std::cout<<"option name Ponder type check default false"<<std::endl;
-    std::cout<<"uciok"<<std::endl;
+    std::cout << "id name Superultra 2.0" << std::endl;
+    std::cout << "id author Alexander Liang" << std::endl;
+    std::cout << "option name Hash type spin default 16 min 1 max 65536" << std::endl;
+    std::cout << "option name Threads type spin default 1 min 1 max 512" << std::endl;
+    std::cout << "option name Ponder type check default false" << std::endl;
+    std::cout << "uciok" << std::endl;
 }
 
 static uciSearchLims proccessGo(std::istringstream &iss){
@@ -365,7 +367,7 @@ void doLoop(){
         }
         // Say that you are ready
         else if (token == "isready"){
-            std::cout<<"readyok"<<std::endl;
+            std::cout << "readyok" << std::endl;
         }
         // Sets the position through base fen and sequence of moves
         else if (token == "position"){

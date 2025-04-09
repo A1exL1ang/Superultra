@@ -818,26 +818,26 @@ void printSearchResults(searchResultData result){
     }
 
     // Now print out all info
-    std::cout<<"info depth "<<int(result.depthSearched);
-    std::cout<<" seldepth "<<int(result.selDepth);
+    std::cout << "info depth " << int(result.depthSearched);
+    std::cout << " seldepth " << int(result.selDepth);
     
     if (abs(result.score) >= foundMate){
-        std::cout<<" score mate "<<(checkMateScore - abs(result.score) + 1) * (result.score > 0 ? 1 : -1) / 2;
+        std::cout << " score mate " << (checkMateScore - abs(result.score) + 1) * (result.score > 0 ? 1 : -1) / 2;
     }
     else{
-        std::cout<<" score cp "<<result.score;
+        std::cout << " score cp " << result.score;
     }
             
-    std::cout<<" nodes "<<totalNodes;
-    std::cout<<" time "<<timeSpent;
-    std::cout<<" nps "<<int(totalNodes / (timeSpent / 1000.0 + 0.00001));
-    std::cout<<" hashfull "<<hashFull;
-    std::cout<<" pv ";
+    std::cout << " nodes " << totalNodes;
+    std::cout << " time " << timeSpent;
+    std::cout << " nps " << int(totalNodes / (timeSpent / 1000.0 + 0.00001));
+    std::cout << " hashfull " << hashFull;
+    std::cout << " pv ";
 
     for (std::string mv : result.pvMoves){
-        std::cout<<mv<<" ";
+        std::cout << mv << " ";
     }
-    std::cout<<std::endl;
+    std::cout << std::endl;
 }
 
 void selectBestThread(){
@@ -872,12 +872,12 @@ void selectBestThread(){
     }
     // Print the final result of the search
     printSearchResults(bestResult);
-    std::cout<<"bestmove "<<bestResult.pvMoves[0];
+    std::cout << "bestmove " << bestResult.pvMoves[0];
 
     if (bestResult.pvMoves.size() >= 2){
-        std::cout<<" ponder "<<bestResult.pvMoves[1];
+        std::cout << " ponder " << bestResult.pvMoves[1];
     }
-    std::cout<<std::endl;
+    std::cout << std::endl;
 }
 
 void iterativeDeepening(position board, searchData &sd, Depth depthLim){
