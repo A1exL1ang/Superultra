@@ -228,7 +228,7 @@ static void printInfo(){
     std::cout << "id name Superultra 2.0" << std::endl;
     std::cout << "id author Alexander Liang" << std::endl;
     std::cout << "option name Hash type spin default 16 min 1 max 65536" << std::endl;
-    std::cout << "option name Threads type spin default 1 min 1 max 512" << std::endl;
+    std::cout << "option name Threads type spin default 1 min 1 max 2048" << std::endl;
     std::cout << "option name Ponder type check default false" << std::endl;
     std::cout << "uciok" << std::endl;
 }
